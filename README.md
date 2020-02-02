@@ -8,12 +8,13 @@ Shared Golang package for Nagios plugins
 
 ## Overview
 
-This package contains common types and package-level variables. The intent is
-to reduce code duplication between various plugins that we maintain.
+This package contains common types and package-level variables used when
+developing Nagios plugins. The intent is to reduce code duplication between
+various plugins.
 
 ## Features
 
-- Nagios state map
+- Nagios state constants
 
 ## Changelog
 
@@ -46,7 +47,7 @@ package:
 
 ```golang
 fmt.Println("OK: All checks have passed")
-os.Exit(nagios.State["OK"])
+os.Exit(nagios.StateOK)
 ```
 
 When you next build your package this one should be pulled in.
@@ -82,3 +83,4 @@ SOFTWARE.
 ## References
 
 - <https://github.com/nagios-plugins/nagios-plugins/blob/master/plugins-scripts/utils.sh.in>
+- <http://nagios-plugins.org/doc/guidelines.html>

@@ -9,16 +9,18 @@
 // variables intended for use with various plugins to reduce code duplication.
 package nagios
 
-// State is a map of specific Nagios plugin/service check states.
-// This map replicates the values from utils.sh which is normally found at one
-// of these two locations:
+// Nagios plugin/service check states. These constants replicate the values
+// from utils.sh which is normally found at one of these two locations,
+// depending on which Linux distribution you're using:
 //
-// /usr/lib/nagios/plugins/utils.sh
-// /usr/local/nagios/libexec/utils.sh
-var State = map[string]int{
-	"OK":        0,
-	"WARNING":   1,
-	"CRITICAL":  2,
-	"UNKNOWN":   3,
-	"DEPENDENT": 4,
-}
+//     /usr/lib/nagios/plugins/utils.sh
+//     /usr/local/nagios/libexec/utils.sh
+//
+// See also http://nagios-plugins.org/doc/guidelines.html
+const (
+	StateOK        int = 0
+	StateWARNING   int = 1
+	StateCRITICAL  int = 2
+	StateUNKNOWN   int = 3
+	StateDEPENDENT int = 4
+)
