@@ -26,6 +26,16 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.2.0] - 2020-02-02
+
+### Added
+
+- Add Nagios `State` constants
+
+### Removed
+
+- Nagios `State` map
+
 ## [v0.1.0] - 2020-01-20
 
 ### Added
@@ -34,5 +44,6 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.2.0...HEAD
+[v0.2.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.2.0
 [v0.1.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.1.0
