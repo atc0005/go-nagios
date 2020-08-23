@@ -82,4 +82,4 @@ jobs:
 
       - name: Build using vendored dependencies (if applicable)
         run: |
-          go build -v -mod=vendor .
+          go build -v -mod=vendor ./...
