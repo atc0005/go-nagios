@@ -1,3 +1,4 @@
+<!-- omit in toc -->
 # go-nagios
 
 Shared Golang package for Nagios plugins
@@ -8,6 +9,16 @@ Shared Golang package for Nagios plugins
 [![Validate Docs](https://github.com/atc0005/go-nagios/workflows/Validate%20Docs/badge.svg)](https://github.com/atc0005/go-nagios/actions?query=workflow%3A%22Validate+Docs%22)
 [![Lint and Build using Makefile](https://github.com/atc0005/go-nagios/workflows/Lint%20and%20Build%20using%20Makefile/badge.svg)](https://github.com/atc0005/go-nagios/actions?query=workflow%3A%22Lint+and+Build+using+Makefile%22)
 [![Quick Validation](https://github.com/atc0005/go-nagios/workflows/Quick%20Validation/badge.svg)](https://github.com/atc0005/go-nagios/actions?query=workflow%3A%22Quick+Validation%22)
+
+<!-- omit in toc -->
+## Table of contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Changelog](#changelog)
+- [How to use](#how-to-use)
+- [License](#license)
+- [References](#references)
 
 ## Overview
 
