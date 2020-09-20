@@ -142,12 +142,11 @@ func (es ExitState) ReturnCheckResults() {
 
 		if es.LongServiceOutput != "" {
 
-			fmt.Printf(
-				"%s**THRESHOLDS**%s%s",
-				CheckOutputEOL, CheckOutputEOL, CheckOutputEOL,
-			)
+			fmt.Printf("%s**THRESHOLDS**%s", CheckOutputEOL, CheckOutputEOL)
 
 			if es.CriticalThreshold != "" || es.WarningThreshold != "" {
+
+				fmt.Print(CheckOutputEOL)
 
 				if es.CriticalThreshold != "" {
 					fmt.Printf(
@@ -167,7 +166,7 @@ func (es ExitState) ReturnCheckResults() {
 					)
 				}
 			} else {
-				fmt.Printf("* Not defined%s", CheckOutputEOL)
+				fmt.Printf("%s* Not specified%s", CheckOutputEOL, CheckOutputEOL)
 			}
 
 			fmt.Printf("%s**DETAILED INFO**%s", CheckOutputEOL, CheckOutputEOL)
@@ -176,7 +175,12 @@ func (es ExitState) ReturnCheckResults() {
 			// interpret them literally instead of emitting an actual newline.
 			// We work around that by using fmt.Printf() for output that is
 			// intended for display within the Nagios web UI.
-			fmt.Printf("%v%s", es.LongServiceOutput, CheckOutputEOL)
+			fmt.Printf(
+				"%s%v%s",
+				CheckOutputEOL,
+				es.LongServiceOutput,
+				CheckOutputEOL,
+			)
 		}
 
 	}
