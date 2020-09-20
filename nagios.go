@@ -150,11 +150,21 @@ func (es ExitState) ReturnCheckResults() {
 			if es.CriticalThreshold != "" || es.WarningThreshold != "" {
 
 				if es.CriticalThreshold != "" {
-					fmt.Printf("* %v%s", es.CriticalThreshold, CheckOutputEOL)
+					fmt.Printf(
+						"* %s: %v%s",
+						StateCRITICALLabel,
+						es.CriticalThreshold,
+						CheckOutputEOL,
+					)
 				}
 
 				if es.WarningThreshold != "" {
-					fmt.Printf("* %v%s", es.WarningThreshold, CheckOutputEOL)
+					fmt.Printf(
+						"* %s: %v%s",
+						StateWARNINGLabel,
+						es.WarningThreshold,
+						CheckOutputEOL,
+					)
 				}
 			} else {
 				fmt.Printf("* Not defined%s", CheckOutputEOL)
