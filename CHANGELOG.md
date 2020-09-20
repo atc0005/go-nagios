@@ -26,7 +26,26 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
-## [v0.4.0] - 2020-8-31
+## [v0.5.0] - 2020-09-20
+
+### Changed
+
+- Add explicit state labels to threshold list items
+  - `CRITICAL:` and a single space
+  - `WARNING:` and a single space
+  - **BREAKING**: this will require updates to client code to accommodate this
+    change
+- Update whitespace/EOL handling within `Long Service Output` or `DETAILED
+  INFO` section
+  - **BREAKING**: this will require updates to client code to accommodate this
+    change
+
+### Fixed
+
+- Don't assume that state thresholds will be provided
+- `YYYY-MM-DD` changelog version entries
+
+## [v0.4.0] - 2020-08-31
 
 ### Added
 
@@ -169,7 +188,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.0
 [v0.4.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.4.0
 [v0.3.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.3.1
 [v0.3.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.3.0
