@@ -26,6 +26,18 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.5.1] - 2020-09-22
+
+### Changed
+
+- `ExitState` receiver type is now a pointer for `ReturnCheckResults()` method
+
+### Fixed
+
+- Documentation
+  - Update doc comments and README examples to (hopefully) better explain
+    method usage
+
 ## [v0.5.0] - 2020-09-20
 
 ### Changed
@@ -188,7 +200,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.5.1...HEAD
+[v0.5.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.1
 [v0.5.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.0
 [v0.4.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.4.0
 [v0.3.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.3.1
