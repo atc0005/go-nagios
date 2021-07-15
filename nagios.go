@@ -147,11 +147,13 @@ func (es *ExitState) ReturnCheckResults() {
 		stackTrace := make([]byte, 512)
 		stackTraceSize := runtime.Stack(stackTrace, false)
 
-		// Using literal `<pre>` tags in an effort to wrap the stack trace
-		// details so that they are not interpreted as formatting characters
-		// when passed through web UI, text, email, Teams, etc.
+		// Wrap stack trace details in an attempt to prevent these details
+		// from being interpreted as formatting characters when passed through
+		// web UI, text, email, Teams, etc. We use Markdown fenced code blocks
+		// instead of `<pre>` start/end tags because Nagios strips out angle
+		// brackets (due to default `illegal_macro_output_chars` settings).
 		es.LongServiceOutput = fmt.Sprintf(
-			"<pre>%s%s%s%s%s%s</pre>",
+			"```%s%s%s%s%s%s```",
 			CheckOutputEOL,
 			err,
 			CheckOutputEOL,
