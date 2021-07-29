@@ -66,7 +66,7 @@ type ExitState struct {
 	// check contents of Inbox").
 	LastError error
 
-	// LastError is the exit or exit status code provided to the Nagios
+	// ExitStatusCode is the exit or exit status code provided to the Nagios
 	// instance that calls this service check. These status codes indicate to
 	// Nagios "state" the service is considered to be in. The most common
 	// states are OK (0), WARNING (1) and CRITICAL (2).
