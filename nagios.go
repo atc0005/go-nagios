@@ -38,7 +38,7 @@ const (
 	StateOKLabel        string = "OK"
 	StateWARNINGLabel   string = "WARNING"
 	StateCRITICALLabel  string = "CRITICAL"
-	StateUNKNOWNLabel   string = "UKNOWN"
+	StateUNKNOWNLabel   string = "UNKNOWN"
 	StateDEPENDENTLabel string = "DEPENDENT"
 )
 
