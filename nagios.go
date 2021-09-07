@@ -50,6 +50,17 @@ const (
 // output as well.
 const CheckOutputEOL string = "\r\n"
 
+// ServiceState represents the status label and exit code for a service check.
+type ServiceState struct {
+
+	// Label maps directly to one of the supported Nagios state labels.
+	Label string
+
+	// ExitCode is the exit or exit status code associated with a Nagios
+	// service check.
+	ExitCode int
+}
+
 // ExitCallBackFunc represents a function that is called as a final step
 // before application termination so that branding information can be emitted
 // for inclusion in the notification. This helps identify which specific
