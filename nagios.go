@@ -69,10 +69,6 @@ type ServiceState struct {
 // like percent packet loss, free disk space, processor load, number of
 // current users, etc. - basically any type of metric that the plugin is
 // measuring when it executes.
-//
-// https://nagios-plugins.org/doc/guidelines.html
-// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/perfdata.html
-// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/pluginapi.html
 type PerformanceData struct {
 
 	// Label is the single quoted text string used as a label for a specific
@@ -82,8 +78,8 @@ type PerformanceData struct {
 	//
 	// The popular convention used by plugin authors (and official
 	// documentation) is to use underscores for separating multiple words. For
-	// example, 'percent_packet_loss' instead of 'percent packet loss' or
-	// 'percentPacketLoss'.
+	// example, 'percent_packet_loss' instead of 'percent packet loss',
+	// 'percentPacketLoss' or 'percent-packet-loss.
 	Label string
 
 	// Value is the data point associated with the performance data label.
@@ -342,18 +338,28 @@ func (es *ExitState) ReturnCheckResults() {
 	}
 
 	// Generate formatted performance data if provided.
-	if es.perfData != nil {
+	if len(es.perfData) != 0 {
 
-		// Performance data must be separated from the text output
-		// (LongServiceOutput) via a pipe character.
-		fmt.Print("|")
+		// Performance data metrics are appended to plugin output. These
+		// metrics are provided as a single line, leading with a pipe
+		// character, a space and one or more metrics each separated from
+		// another by a single space. single space.
+		fmt.Print(" |")
 
 		for _, pd := range es.perfData {
 			fmt.Printf(
-				// expected format:
+				// The expected format of a performance data metric:
+				//
 				// 'label'=value[UOM];[warn];[crit];[min];[max]
+				//
+				// References:
+				//
 				// https://nagios-plugins.org/doc/guidelines.html
-				"'%s'=%s%s;%s;%s;%s;%s%s",
+				// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/perfdata.html
+				// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/pluginapi.html
+				// https://www.monitoring-plugins.org/doc/guidelines.html
+				// https://icinga.com/docs/icinga-2/latest/doc/05-service-monitoring/#performance-data-metrics
+				" '%s'=%s%s;%s;%s;%s;%s",
 				pd.Label,
 				pd.Value,
 				pd.UnitOfMeasurement,
@@ -361,9 +367,11 @@ func (es *ExitState) ReturnCheckResults() {
 				pd.Crit,
 				pd.Min,
 				pd.Max,
-				CheckOutputEOL,
 			)
 		}
+
+		// Add final trailing newline to satisfy Nagios plugin output format.
+		fmt.Print(CheckOutputEOL)
 	}
 
 	os.Exit(es.ExitStatusCode)
