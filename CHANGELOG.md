@@ -30,13 +30,13 @@ The following types of changes will be recorded in this file:
 
 ### Added
 
-- Add initial support for collecting and formatting performance data
+- Add initial support for collecting, formatting & emitting performance data
 
 ### Changed
 
 - Dependencies
   - `actions/setup-node`
-    - (`v2.4.0` to `v2.4.1`
+    - `v2.4.0` to `v2.4.1`
 
 ### Fixed
 
