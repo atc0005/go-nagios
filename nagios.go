@@ -5,8 +5,6 @@
 // Licensed under the MIT License. See LICENSE file in the project root for
 // full license information.
 
-// Package nagios is a small collection of common types and package-level
-// variables intended for use with various plugins to reduce code duplication.
 package nagios
 
 import (
