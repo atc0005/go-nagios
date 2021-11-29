@@ -384,7 +384,7 @@ func (es *ExitState) ReturnCheckResults() {
 // directly.
 func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error {
 
-	if pd == nil {
+	if len(pd) == 0 {
 		return fmt.Errorf("no performance data provided")
 	}
 
