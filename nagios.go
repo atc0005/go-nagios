@@ -166,7 +166,13 @@ type ExitState struct {
 	// LastError is the last error encountered which should be reported as
 	// part of ending the service check (e.g., "Failed to connect to XYZ to
 	// check contents of Inbox").
+	//
+	// Deprecated: Use Errors field or AddError method instead.
 	LastError error
+
+	// Errors is a collection of one or more recorded errors to be displayed
+	// in LongServiceOutput as a list when ending the service check.
+	Errors []error
 
 	// ExitStatusCode is the exit or exit status code provided to the Nagios
 	// instance that calls this service check. These status codes indicate to
@@ -252,7 +258,7 @@ func (es *ExitState) ReturnCheckResults() {
 	// ExitState and make clear that the client code/plugin crashed.
 	if err := recover(); err != nil {
 
-		es.LastError = fmt.Errorf("plugin crash/panic detected: %s", err)
+		es.AddError(fmt.Errorf("plugin crash/panic detected: %s", err))
 
 		es.ServiceOutput = fmt.Sprintf(
 			"%s: plugin crash detected. See details via web UI or run plugin manually via CLI.",
@@ -295,7 +301,7 @@ func (es *ExitState) ReturnCheckResults() {
 	// formatting verbs.
 	fmt.Print(es.ServiceOutput)
 
-	if es.LongServiceOutput != "" || es.LastError != nil {
+	if es.LongServiceOutput != "" || es.LastError != nil || len(es.Errors) > 0 {
 
 		fmt.Printf(
 			"%s%s**%s**%s",
@@ -308,8 +314,18 @@ func (es *ExitState) ReturnCheckResults() {
 		// If an error occurred or if there are additional details to share ...
 
 		if es.LastError != nil {
-			fmt.Printf("%s* %v%s", CheckOutputEOL, es.LastError, CheckOutputEOL)
-		} else {
+			fmt.Printf("* %v%s", es.LastError, CheckOutputEOL)
+		}
+
+		if len(es.Errors) > 0 {
+			for _, err := range es.Errors {
+				if err != nil {
+					fmt.Printf("* %v%s", err, CheckOutputEOL)
+				}
+			}
+		}
+
+		if es.LastError == nil && len(es.Errors) == 0 {
 			fmt.Printf("%s* None%s", CheckOutputEOL, CheckOutputEOL)
 		}
 
@@ -472,6 +488,11 @@ func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error
 
 	return nil
 
+}
+
+// AddError appends provided errors to the collection.
+func (es *ExitState) AddError(err ...error) {
+	es.Errors = append(es.Errors, err...)
 }
 
 // SetThresholdsLabel overrides the default thresholds label text.
