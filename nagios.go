@@ -52,6 +52,13 @@ const (
 // XI.
 const CheckOutputEOL string = " \n"
 
+// Default header text for various sections of the output if not overridden.
+const (
+	defaultThresholdsLabel   string = "THRESHOLDS"
+	defaultErrorsLabel       string = "ERRORS"
+	defaultDetailedInfoLabel string = "DETAILED INFO"
+)
+
 // ServiceState represents the status label and exit code for a service check.
 type ServiceState struct {
 
@@ -189,6 +196,18 @@ type ExitState struct {
 	// is used for display purposes.
 	CriticalThreshold string
 
+	// thresholdLabel is an optional custom label used in place of the
+	// standard text prior to a list of threshold values.
+	thresholdsLabel string
+
+	// errorsLabel is an optional custom label used in place of the standard
+	// text prior to a list of recorded error values.
+	errorsLabel string
+
+	// detailedInfoLabel is an optional custom label used in place of the
+	// standard text prior to emitting LongServiceOutput.
+	detailedInfoLabel string
+
 	// BrandingCallback is a function that is called before application
 	// termination to emit branding details at the end of the notification.
 	// See also ExitCallBackFunc.
@@ -278,7 +297,13 @@ func (es *ExitState) ReturnCheckResults() {
 
 	if es.LongServiceOutput != "" || es.LastError != nil {
 
-		fmt.Printf("%s%s**ERRORS**%s", CheckOutputEOL, CheckOutputEOL, CheckOutputEOL)
+		fmt.Printf(
+			"%s%s**%s**%s",
+			es.getErrorsLabelText(),
+			CheckOutputEOL,
+			CheckOutputEOL,
+			CheckOutputEOL,
+		)
 
 		// If an error occurred or if there are additional details to share ...
 
@@ -290,7 +315,12 @@ func (es *ExitState) ReturnCheckResults() {
 
 		if es.LongServiceOutput != "" {
 
-			fmt.Printf("%s**THRESHOLDS**%s", CheckOutputEOL, CheckOutputEOL)
+			fmt.Printf(
+				"%s**%s**%s",
+				es.getThresholdsLabelText(),
+				CheckOutputEOL,
+				CheckOutputEOL,
+			)
 
 			if es.CriticalThreshold != "" || es.WarningThreshold != "" {
 
@@ -317,7 +347,12 @@ func (es *ExitState) ReturnCheckResults() {
 				fmt.Printf("%s* Not specified%s", CheckOutputEOL, CheckOutputEOL)
 			}
 
-			fmt.Printf("%s**DETAILED INFO**%s", CheckOutputEOL, CheckOutputEOL)
+			fmt.Printf(
+				"%s**%s**%s",
+				es.getDetailedInfoLabelText(),
+				CheckOutputEOL,
+				CheckOutputEOL,
+			)
 
 			// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
 			// interpret them literally instead of emitting an actual newline.
@@ -380,6 +415,39 @@ func (es *ExitState) ReturnCheckResults() {
 	os.Exit(es.ExitStatusCode)
 }
 
+// getThresholdsLabelText retrieves the custom thresholds label text if set,
+// otherwise returns the default value.
+func (es ExitState) getThresholdsLabelText() string {
+	switch {
+	case es.thresholdsLabel != "":
+		return es.thresholdsLabel
+	default:
+		return defaultThresholdsLabel
+	}
+}
+
+// getErrorsLabelText retrieves the custom errors label text if set, otherwise
+// returns the default value.
+func (es ExitState) getErrorsLabelText() string {
+	switch {
+	case es.errorsLabel != "":
+		return es.errorsLabel
+	default:
+		return defaultErrorsLabel
+	}
+}
+
+// getErrorsLabelText retrieves the custom detailed info label text if set,
+// otherwise returns the default value.
+func (es ExitState) getDetailedInfoLabelText() string {
+	switch {
+	case es.detailedInfoLabel != "":
+		return es.detailedInfoLabel
+	default:
+		return defaultDetailedInfoLabel
+	}
+}
+
 // AddPerfData appends provided performance data. Validation is skipped if
 // requested, otherwise an error is returned if validation fails. Validation
 // failure results in no performance data being appended.
@@ -404,4 +472,19 @@ func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error
 
 	return nil
 
+}
+
+// SetThresholdsLabel overrides the default thresholds label text.
+func (es *ExitState) SetThresholdsLabel(newLabel string) {
+	es.thresholdsLabel = newLabel
+}
+
+// SetErrorsLabel overrides the default errors label text.
+func (es *ExitState) SetErrorsLabel(newLabel string) {
+	es.errorsLabel = newLabel
+}
+
+// SetDetailedInfoLabel overrides the default detailed info label text.
+func (es *ExitState) SetDetailedInfoLabel(newLabel string) {
+	es.detailedInfoLabel = newLabel
 }
