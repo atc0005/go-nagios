@@ -305,9 +305,9 @@ func (es *ExitState) ReturnCheckResults() {
 
 		fmt.Printf(
 			"%s%s**%s**%s",
+			CheckOutputEOL,
+			CheckOutputEOL,
 			es.getErrorsLabelText(),
-			CheckOutputEOL,
-			CheckOutputEOL,
 			CheckOutputEOL,
 		)
 
@@ -333,8 +333,8 @@ func (es *ExitState) ReturnCheckResults() {
 
 			fmt.Printf(
 				"%s**%s**%s",
-				es.getThresholdsLabelText(),
 				CheckOutputEOL,
+				es.getThresholdsLabelText(),
 				CheckOutputEOL,
 			)
 
@@ -365,8 +365,8 @@ func (es *ExitState) ReturnCheckResults() {
 
 			fmt.Printf(
 				"%s**%s**%s",
-				es.getDetailedInfoLabelText(),
 				CheckOutputEOL,
+				es.getDetailedInfoLabelText(),
 				CheckOutputEOL,
 			)
 
