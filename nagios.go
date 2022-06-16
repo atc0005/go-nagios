@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
+	"strings"
 )
 
 // Nagios plugin/service check states. These constants replicate the values
@@ -46,7 +47,7 @@ const (
 // (without a leading space) within the `$LONGSERVICEOUTPUT$` macro as literal
 // values instead of parsing them for display purposes.
 //
-// Using DOS EOL values with `fmt.Printf()` gave expected formatting results
+// Using DOS EOL values with `fmt.Fprintf(&output,)` gave expected formatting results
 // in the Nagios Core web UI, but resulted in double newlines in Nagios XI
 // output (see GH-109). Switching back to a UNIX EOL with a single leading
 // space appears to give the intended results for both Nagios Core and Nagios
@@ -289,6 +290,8 @@ type ExitState struct {
 // details from the panic instead as a CRITICAL state.
 func (es *ExitState) ReturnCheckResults() {
 
+	var output strings.Builder
+
 	// Check for unhandled panic in client code. If present, override
 	// ExitState and make clear that the client code/plugin crashed.
 	if err := recover(); err != nil {
@@ -323,10 +326,10 @@ func (es *ExitState) ReturnCheckResults() {
 	}
 
 	// ##################################################################
-	// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
-	// interpret them literally instead of emitting an actual newline.
-	// We work around that by using fmt.Printf() and fmt.Print() for
-	// output that is intended for display within the Nagios web UI.
+	// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as `\n`:
+	// Nagios seems to interpret them literally instead of emitting an actual
+	// newline. We work around that by using fmt.Fprintf() and fmt.Fprint()
+	// for output that is intended for display within the Nagios web UI.
 	// ##################################################################
 
 	// One-line output used as the summary or short explanation for the
@@ -334,192 +337,26 @@ func (es *ExitState) ReturnCheckResults() {
 	// changes to this content, simply emit it as-is. This helps avoid
 	// potential issues with literal characters being interpreted as
 	// formatting verbs.
-	fmt.Print(es.ServiceOutput)
+	fmt.Fprintf(&output, es.ServiceOutput)
 
-	// If one or more errors were recorded and client code has not opted to
-	// hide the section ...
-	if !es.isErrorsHidden() {
+	es.handleErrorsSection(&output)
 
-		fmt.Printf(
-			"%s%s**%s**%s%s",
-			CheckOutputEOL,
-			CheckOutputEOL,
-			es.getErrorsLabelText(),
-			CheckOutputEOL,
-			CheckOutputEOL,
-		)
+	es.handleThresholdsSection(&output)
 
-		if es.LastError != nil {
-			fmt.Printf("* %v%s", es.LastError, CheckOutputEOL)
-		}
-
-		if len(es.Errors) > 0 {
-			for _, err := range es.Errors {
-				if err != nil {
-					fmt.Printf("* %v%s", err, CheckOutputEOL)
-				}
-			}
-		}
-
-	}
-
-	if es.LongServiceOutput != "" {
-
-		// If one or more threshold values were recorded and client code has
-		// not opted to hide the section ...
-		if !es.isThresholdsSectionHidden() {
-
-			fmt.Printf(
-				"%s**%s**%s%s",
-				CheckOutputEOL,
-				es.getThresholdsLabelText(),
-				CheckOutputEOL,
-				CheckOutputEOL,
-			)
-
-			if es.CriticalThreshold != "" {
-				fmt.Printf(
-					"* %s: %v%s",
-					StateCRITICALLabel,
-					es.CriticalThreshold,
-					CheckOutputEOL,
-				)
-			}
-
-			if es.WarningThreshold != "" {
-				fmt.Printf(
-					"* %s: %v%s",
-					StateWARNINGLabel,
-					es.WarningThreshold,
-					CheckOutputEOL,
-				)
-			}
-		}
-
-		// Hide section header/label if threshold and error values were not
-		// specified by client code or if client code opted to explicitly hide
-		// those sections; there is no need to use a header to separate the
-		// LongServiceOutput from those sections if they are not displayed.
-		//
-		// If we hide the section header, we still provide some padding to
-		// prevent the LongServiceOutput from running up against the
-		// ServiceOutput content.
-		switch {
-		case !es.isThresholdsSectionHidden() || !es.isErrorsHidden():
-			fmt.Printf(
-				"%s**%s**%s",
-				CheckOutputEOL,
-				es.getDetailedInfoLabelText(),
-				CheckOutputEOL,
-			)
-		default:
-			fmt.Print(CheckOutputEOL)
-		}
-
-		// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
-		// interpret them literally instead of emitting an actual newline.
-		// We work around that by using fmt.Printf() for output that is
-		// intended for display within the Nagios web UI.
-		fmt.Printf(
-			"%s%v%s",
-			CheckOutputEOL,
-			es.LongServiceOutput,
-			CheckOutputEOL,
-		)
-	}
+	es.handleLongServiceOutput(&output)
 
 	// If set, call user-provided branding function before emitting
 	// performance data and exiting application.
 	if es.BrandingCallback != nil {
-		fmt.Printf("%s%s%s", CheckOutputEOL, es.BrandingCallback(), CheckOutputEOL)
+		fmt.Fprintf(&output, "%s%s%s", CheckOutputEOL, es.BrandingCallback(), CheckOutputEOL)
 	}
 
-	// Generate formatted performance data if provided. Only emit if a
-	// one-line summary is set by client code.
-	if len(es.perfData) != 0 && es.ServiceOutput != "" {
+	es.handlePerformanceData(&output)
 
-		// Performance data metrics are appended to plugin output. These
-		// metrics are provided as a single line, leading with a pipe
-		// character, a space and one or more metrics each separated from
-		// another by a single space.
-		fmt.Print(" |")
-
-		for _, pd := range es.perfData {
-			fmt.Printf(
-				// The expected format of a performance data metric:
-				//
-				// 'label'=value[UOM];[warn];[crit];[min];[max]
-				//
-				// References:
-				//
-				// https://nagios-plugins.org/doc/guidelines.html
-				// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/perfdata.html
-				// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/pluginapi.html
-				// https://www.monitoring-plugins.org/doc/guidelines.html
-				// https://icinga.com/docs/icinga-2/latest/doc/05-service-monitoring/#performance-data-metrics
-				" '%s'=%s%s;%s;%s;%s;%s",
-				pd.Label,
-				pd.Value,
-				pd.UnitOfMeasurement,
-				pd.Warn,
-				pd.Crit,
-				pd.Min,
-				pd.Max,
-			)
-		}
-
-		// Add final trailing newline to satisfy Nagios plugin output format.
-		fmt.Print(CheckOutputEOL)
-	}
+	// Emit all collected output.
+	fmt.Print(output.String())
 
 	os.Exit(es.ExitStatusCode)
-}
-
-func (es ExitState) isThresholdsSectionHidden() bool {
-	if es.hideThresholdsSection || (es.WarningThreshold == "" && es.CriticalThreshold == "") {
-		return true
-	}
-	return false
-}
-
-func (es ExitState) isErrorsHidden() bool {
-	if es.hideErrorsSection || (len(es.Errors) == 0 && es.LastError == nil) {
-		return true
-	}
-	return false
-}
-
-// getThresholdsLabelText retrieves the custom thresholds label text if set,
-// otherwise returns the default value.
-func (es ExitState) getThresholdsLabelText() string {
-	switch {
-	case es.thresholdsLabel != "":
-		return es.thresholdsLabel
-	default:
-		return defaultThresholdsLabel
-	}
-}
-
-// getErrorsLabelText retrieves the custom errors label text if set, otherwise
-// returns the default value.
-func (es ExitState) getErrorsLabelText() string {
-	switch {
-	case es.errorsLabel != "":
-		return es.errorsLabel
-	default:
-		return defaultErrorsLabel
-	}
-}
-
-// getErrorsLabelText retrieves the custom detailed info label text if set,
-// otherwise returns the default value.
-func (es ExitState) getDetailedInfoLabelText() string {
-	switch {
-	case es.detailedInfoLabel != "":
-		return es.detailedInfoLabel
-	default:
-		return defaultDetailedInfoLabel
-	}
 }
 
 // AddPerfData appends provided performance data. Validation is skipped if
@@ -551,32 +388,4 @@ func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error
 // AddError appends provided errors to the collection.
 func (es *ExitState) AddError(err ...error) {
 	es.Errors = append(es.Errors, err...)
-}
-
-// SetThresholdsLabel overrides the default thresholds label text.
-func (es *ExitState) SetThresholdsLabel(newLabel string) {
-	es.thresholdsLabel = newLabel
-}
-
-// SetErrorsLabel overrides the default errors label text.
-func (es *ExitState) SetErrorsLabel(newLabel string) {
-	es.errorsLabel = newLabel
-}
-
-// SetDetailedInfoLabel overrides the default detailed info label text.
-func (es *ExitState) SetDetailedInfoLabel(newLabel string) {
-	es.detailedInfoLabel = newLabel
-}
-
-// HideThresholdsSection indicates that client code has opted to hide the
-// thresholds section, regardless of whether values were previously provided
-// for display.
-func (es *ExitState) HideThresholdsSection() {
-	es.hideThresholdsSection = true
-}
-
-// HideErrorsSection indicates that client code has opted to hide the errors
-// section, regardless of whether values were previously provided for display.
-func (es *ExitState) HideErrorsSection() {
-	es.hideErrorsSection = true
 }
