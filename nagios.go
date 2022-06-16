@@ -47,11 +47,11 @@ const (
 // (without a leading space) within the `$LONGSERVICEOUTPUT$` macro as literal
 // values instead of parsing them for display purposes.
 //
-// Using DOS EOL values with `fmt.Fprintf(&output,)` gave expected formatting results
-// in the Nagios Core web UI, but resulted in double newlines in Nagios XI
-// output (see GH-109). Switching back to a UNIX EOL with a single leading
-// space appears to give the intended results for both Nagios Core and Nagios
-// XI.
+// Using DOS EOL values with fmt.Fprintf() (or fmt.Fprintln()) gives expected
+// formatting results in the Nagios Core web UI, but results in double
+// newlines in Nagios XI output (see GH-109). Using a UNIX EOL with a single
+// leading space appears to give the intended results for both Nagios Core and
+// Nagios XI.
 const CheckOutputEOL string = " \n"
 
 // Default header text for various sections of the output if not overridden.
