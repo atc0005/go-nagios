@@ -301,7 +301,7 @@ func (es *ExitState) ReturnCheckResults() {
 	// formatting verbs.
 	fmt.Print(es.ServiceOutput)
 
-	if es.LongServiceOutput != "" || es.LastError != nil || len(es.Errors) > 0 {
+	if es.LastError != nil || len(es.Errors) > 0 {
 
 		fmt.Printf(
 			"%s%s**%s**%s",
@@ -310,8 +310,6 @@ func (es *ExitState) ReturnCheckResults() {
 			es.getErrorsLabelText(),
 			CheckOutputEOL,
 		)
-
-		// If an error occurred or if there are additional details to share ...
 
 		if es.LastError != nil {
 			fmt.Printf("* %v%s", es.LastError, CheckOutputEOL)
@@ -325,63 +323,56 @@ func (es *ExitState) ReturnCheckResults() {
 			}
 		}
 
-		if es.LastError == nil && len(es.Errors) == 0 {
-			fmt.Printf("%s* None%s", CheckOutputEOL, CheckOutputEOL)
-		}
+	}
 
-		if es.LongServiceOutput != "" {
+	if es.LongServiceOutput != "" {
+
+		if es.CriticalThreshold != "" || es.WarningThreshold != "" {
 
 			fmt.Printf(
-				"%s**%s**%s",
+				"%s**%s**%s%s",
 				CheckOutputEOL,
 				es.getThresholdsLabelText(),
 				CheckOutputEOL,
+				CheckOutputEOL,
 			)
 
-			if es.CriticalThreshold != "" || es.WarningThreshold != "" {
-
-				fmt.Print(CheckOutputEOL)
-
-				if es.CriticalThreshold != "" {
-					fmt.Printf(
-						"* %s: %v%s",
-						StateCRITICALLabel,
-						es.CriticalThreshold,
-						CheckOutputEOL,
-					)
-				}
-
-				if es.WarningThreshold != "" {
-					fmt.Printf(
-						"* %s: %v%s",
-						StateWARNINGLabel,
-						es.WarningThreshold,
-						CheckOutputEOL,
-					)
-				}
-			} else {
-				fmt.Printf("%s* Not specified%s", CheckOutputEOL, CheckOutputEOL)
+			if es.CriticalThreshold != "" {
+				fmt.Printf(
+					"* %s: %v%s",
+					StateCRITICALLabel,
+					es.CriticalThreshold,
+					CheckOutputEOL,
+				)
 			}
 
-			fmt.Printf(
-				"%s**%s**%s",
-				CheckOutputEOL,
-				es.getDetailedInfoLabelText(),
-				CheckOutputEOL,
-			)
-
-			// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
-			// interpret them literally instead of emitting an actual newline.
-			// We work around that by using fmt.Printf() for output that is
-			// intended for display within the Nagios web UI.
-			fmt.Printf(
-				"%s%v%s",
-				CheckOutputEOL,
-				es.LongServiceOutput,
-				CheckOutputEOL,
-			)
+			if es.WarningThreshold != "" {
+				fmt.Printf(
+					"* %s: %v%s",
+					StateWARNINGLabel,
+					es.WarningThreshold,
+					CheckOutputEOL,
+				)
+			}
 		}
 
+		fmt.Printf(
+			"%s**%s**%s",
+			CheckOutputEOL,
+			es.getDetailedInfoLabelText(),
+			CheckOutputEOL,
+		)
+
+		// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
+		// interpret them literally instead of emitting an actual newline.
+		// We work around that by using fmt.Printf() for output that is
+		// intended for display within the Nagios web UI.
+		fmt.Printf(
+			"%s%v%s",
+			CheckOutputEOL,
+			es.LongServiceOutput,
+			CheckOutputEOL,
+		)
 	}
 
 	// If set, call user-provided branding function before emitting
