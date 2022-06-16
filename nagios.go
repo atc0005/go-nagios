@@ -214,6 +214,16 @@ type ExitState struct {
 	// standard text prior to emitting LongServiceOutput.
 	detailedInfoLabel string
 
+	// hideThresholdsSection indicates whether client code has opted to hide
+	// the thresholds section, regardless of whether client code previously
+	// specified values for display.
+	hideThresholdsSection bool
+
+	// hideErrorsSection indicates whether client code has opted to hide the
+	// errors section, regardless of whether client code previously specified
+	// values for display.
+	hideErrorsSection bool
+
 	// BrandingCallback is a function that is called before application
 	// termination to emit branding details at the end of the notification.
 	// See also ExitCallBackFunc.
@@ -301,13 +311,16 @@ func (es *ExitState) ReturnCheckResults() {
 	// formatting verbs.
 	fmt.Print(es.ServiceOutput)
 
-	if es.LastError != nil || len(es.Errors) > 0 {
+	// If one or more errors were recorded and client code has not opted to
+	// hide the section ...
+	if !es.isErrorsHidden() {
 
 		fmt.Printf(
-			"%s%s**%s**%s",
+			"%s%s**%s**%s%s",
 			CheckOutputEOL,
 			CheckOutputEOL,
 			es.getErrorsLabelText(),
+			CheckOutputEOL,
 			CheckOutputEOL,
 		)
 
@@ -327,7 +340,9 @@ func (es *ExitState) ReturnCheckResults() {
 
 	if es.LongServiceOutput != "" {
 
-		if es.CriticalThreshold != "" || es.WarningThreshold != "" {
+		// If one or more threshold values were recorded and client code has
+		// not opted to hide the section ...
+		if !es.isThresholdsSectionHidden() {
 
 			fmt.Printf(
 				"%s**%s**%s%s",
@@ -356,12 +371,25 @@ func (es *ExitState) ReturnCheckResults() {
 			}
 		}
 
-		fmt.Printf(
-			"%s**%s**%s",
-			CheckOutputEOL,
-			es.getDetailedInfoLabelText(),
-			CheckOutputEOL,
-		)
+		// Hide section header/label if threshold and error values were not
+		// specified by client code or if client code opted to explicitly hide
+		// those sections; there is no need to use a header to separate the
+		// LongServiceOutput from those sections if they are not displayed.
+		//
+		// If we hide the section header, we still provide some padding to
+		// prevent the LongServiceOutput from running up against the
+		// ServiceOutput content.
+		switch {
+		case !es.isThresholdsSectionHidden() || !es.isErrorsHidden():
+			fmt.Printf(
+				"%s**%s**%s",
+				CheckOutputEOL,
+				es.getDetailedInfoLabelText(),
+				CheckOutputEOL,
+			)
+		default:
+			fmt.Print(CheckOutputEOL)
+		}
 
 		// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
 		// interpret them literally instead of emitting an actual newline.
@@ -420,6 +448,20 @@ func (es *ExitState) ReturnCheckResults() {
 	}
 
 	os.Exit(es.ExitStatusCode)
+}
+
+func (es ExitState) isThresholdsSectionHidden() bool {
+	if es.hideThresholdsSection || (es.WarningThreshold == "" && es.CriticalThreshold == "") {
+		return true
+	}
+	return false
+}
+
+func (es ExitState) isErrorsHidden() bool {
+	if es.hideErrorsSection || (len(es.Errors) == 0 && es.LastError == nil) {
+		return true
+	}
+	return false
 }
 
 // getThresholdsLabelText retrieves the custom thresholds label text if set,
@@ -499,4 +541,17 @@ func (es *ExitState) SetErrorsLabel(newLabel string) {
 // SetDetailedInfoLabel overrides the default detailed info label text.
 func (es *ExitState) SetDetailedInfoLabel(newLabel string) {
 	es.detailedInfoLabel = newLabel
+}
+
+// HideThresholdsSection indicates that client code has opted to hide the
+// thresholds section, regardless of whether values were previously provided
+// for display.
+func (es *ExitState) HideThresholdsSection() {
+	es.hideThresholdsSection = true
+}
+
+// HideErrorsSection indicates that client code has opted to hide the errors
+// section, regardless of whether values were previously provided for display.
+func (es *ExitState) HideErrorsSection() {
+	es.hideErrorsSection = true
 }
