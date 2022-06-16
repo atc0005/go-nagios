@@ -8,6 +8,7 @@
 package nagios
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -57,6 +58,30 @@ const (
 	defaultThresholdsLabel   string = "THRESHOLDS"
 	defaultErrorsLabel       string = "ERRORS"
 	defaultDetailedInfoLabel string = "DETAILED INFO"
+)
+
+// Sentinel error collection. Exported for potential use by client code to
+// detect & handle specific error scenarios.
+var (
+	// ErrPanicDetected indicates that client code has an unhandled panic and
+	// that this library detected it before it could cause the plugin to
+	// abort. This error is included in the LongServiceOutput emitted by the
+	// plugin.
+	ErrPanicDetected = errors.New("plugin crash/panic detected")
+
+	// ErrPerformanceDataMissingLabel indicates that client code did not
+	// provide a PerformanceData value in the expected format; the label for
+	// the label/value pair is missing.
+	ErrPerformanceDataMissingLabel = errors.New("provided performance data missing required label")
+
+	// ErrPerformanceDataMissingValue indicates that client code did not
+	// provide a PerformanceData value in the expected format; the value for
+	// the label/value pair is missing.
+	ErrPerformanceDataMissingValue = errors.New("provided performance data missing required value")
+
+	// ErrNoPerformanceDataProvided indicates that client code did not provide
+	// the expected PerformanceData value(s).
+	ErrNoPerformanceDataProvided = errors.New("no performance data provided")
 )
 
 // ServiceState represents the status label and exit code for a service check.
@@ -140,9 +165,9 @@ func (pd PerformanceData) Validate() error {
 	// Validate fields
 	switch {
 	case pd.Label == "":
-		return fmt.Errorf("provided performance data missing required label")
+		return ErrPerformanceDataMissingLabel
 	case pd.Value == "":
-		return fmt.Errorf("provided performance data missing required value")
+		return ErrPerformanceDataMissingValue
 
 	// TODO: Expand validation
 	// https://nagios-plugins.org/doc/guidelines.html
@@ -268,7 +293,7 @@ func (es *ExitState) ReturnCheckResults() {
 	// ExitState and make clear that the client code/plugin crashed.
 	if err := recover(); err != nil {
 
-		es.AddError(fmt.Errorf("plugin crash/panic detected: %s", err))
+		es.AddError(fmt.Errorf("%w: %s", ErrPanicDetected, err))
 
 		es.ServiceOutput = fmt.Sprintf(
 			"%s: plugin crash detected. See details via web UI or run plugin manually via CLI.",
@@ -506,7 +531,7 @@ func (es ExitState) getDetailedInfoLabelText() string {
 func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error {
 
 	if len(pd) == 0 {
-		return fmt.Errorf("no performance data provided")
+		return ErrNoPerformanceDataProvided
 	}
 
 	if !skipValidate {
