@@ -19,8 +19,8 @@ import (
 // from utils.sh which is normally found at one of these two locations,
 // depending on which Linux distribution you're using:
 //
-//     /usr/lib/nagios/plugins/utils.sh
-//     /usr/local/nagios/libexec/utils.sh
+// - /usr/lib/nagios/plugins/utils.sh
+// - /usr/local/nagios/libexec/utils.sh
 //
 // See also http://nagios-plugins.org/doc/guidelines.html
 const (
