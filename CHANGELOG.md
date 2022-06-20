@@ -26,6 +26,15 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.9.1] - 2022-06-20
+
+### Fixed
+
+- (GH-132) `LongServiceOutput` header is emitted when
+  `ExitState.LongServiceOutput` field is empty
+- (GH-134) Update lintinstall Makefile recipe
+- (GH-135) Fix Go 1.19beta1 gofmt linter warning
+
 ## [v0.9.0] - 2022-06-16
 
 ### Added
@@ -349,7 +358,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.9.1...HEAD
+[v0.9.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.1
 [v0.9.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.0
 [v0.8.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.2
 [v0.8.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.1
