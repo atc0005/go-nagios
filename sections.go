@@ -90,6 +90,11 @@ func (es ExitState) handleThresholdsSection(w io.Writer) {
 // handle/process the LongServiceOutput content.
 func (es ExitState) handleLongServiceOutput(w io.Writer) {
 
+	// Early exit if there is no content to emit.
+	if es.LongServiceOutput == "" {
+		return
+	}
+
 	// Hide section header/label if threshold and error values were not
 	// specified by client code or if client code opted to explicitly hide
 	// those sections; there is no need to use a header to separate the
