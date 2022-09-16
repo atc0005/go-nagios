@@ -10,6 +10,7 @@ package nagios
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -188,6 +189,9 @@ type ExitCallBackFunc func() string
 // application, including the most recent error and the final intended plugin
 // state.
 type ExitState struct {
+	// outputSink is the user-specified or fallback target for Nagios plugin
+	// output.
+	outputSink io.Writer
 
 	// LastError is the last error encountered which should be reported as
 	// part of ending the service check (e.g., "Failed to connect to XYZ to
@@ -348,8 +352,9 @@ func (es *ExitState) ReturnCheckResults() {
 
 	es.handlePerformanceData(&output)
 
-	// Emit all collected output.
-	fmt.Print(output.String())
+	// Emit all collected plugin output using user-specified or fallback
+	// output target.
+	es.emitOutput(output.String())
 
 	os.Exit(es.ExitStatusCode)
 }
@@ -383,4 +388,28 @@ func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error
 // AddError appends provided errors to the collection.
 func (es *ExitState) AddError(err ...error) {
 	es.Errors = append(es.Errors, err...)
+}
+
+// SetOutputTarget assigns a target for Nagios plugin output. By default
+// output is emitted to os.Stdout.
+func (es *ExitState) SetOutputTarget(w io.Writer) {
+	// Guard against potential nil argument.
+	if w == nil {
+		es.outputSink = os.Stdout
+	}
+
+	es.outputSink = w
+}
+
+// emitOutput writes final plugin output to the previously set output target.
+// No further modifications to plugin output are performed.
+func (es ExitState) emitOutput(pluginOutput string) {
+
+	// Emit all collected output using user-specified output target. Fall back
+	// to standard output if not set.
+	if es.outputSink == nil {
+		es.outputSink = os.Stdout
+	}
+
+	fmt.Fprint(es.outputSink, pluginOutput)
 }
