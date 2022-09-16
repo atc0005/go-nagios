@@ -20,7 +20,7 @@ func (es ExitState) handleServiceOutputSection(w io.Writer) {
 	// changes to this content, simply emit it as-is. This helps avoid
 	// potential issues with literal characters being interpreted as
 	// formatting verbs.
-	fmt.Fprintf(w, es.ServiceOutput)
+	fmt.Fprint(w, es.ServiceOutput)
 }
 
 // handleErrorsSection is a wrapper around the logic used to handle/process the
