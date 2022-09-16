@@ -292,6 +292,13 @@ func (es *ExitState) ReturnCheckResults() {
 
 	var output strings.Builder
 
+	// ##################################################################
+	// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as `\n`:
+	// Nagios seems to interpret them literally instead of emitting an actual
+	// newline. We work around that by using fmt.Fprintf() and fmt.Fprint()
+	// for output that is intended for display within the Nagios web UI.
+	// ##################################################################
+
 	// Check for unhandled panic in client code. If present, override
 	// ExitState and make clear that the client code/plugin crashed.
 	if err := recover(); err != nil {
@@ -325,19 +332,7 @@ func (es *ExitState) ReturnCheckResults() {
 
 	}
 
-	// ##################################################################
-	// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as `\n`:
-	// Nagios seems to interpret them literally instead of emitting an actual
-	// newline. We work around that by using fmt.Fprintf() and fmt.Fprint()
-	// for output that is intended for display within the Nagios web UI.
-	// ##################################################################
-
-	// One-line output used as the summary or short explanation for the
-	// specific Nagios state that we are returning. We apply no formatting
-	// changes to this content, simply emit it as-is. This helps avoid
-	// potential issues with literal characters being interpreted as
-	// formatting verbs.
-	fmt.Fprint(&output, es.ServiceOutput)
+	es.handleServiceOutputSection(&output)
 
 	es.handleErrorsSection(&output)
 
