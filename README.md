@@ -5,6 +5,7 @@ Shared Golang package for Nagios plugins
 
 [![Latest Release](https://img.shields.io/github/release/atc0005/go-nagios.svg?style=flat-square)](https://github.com/atc0005/go-nagios/releases/latest)
 [![Go Reference](https://pkg.go.dev/badge/github.com/atc0005/go-nagios.svg)](https://pkg.go.dev/github.com/atc0005/go-nagios)
+[![go.mod Go version](https://img.shields.io/github/go-mod/go-version/atc0005/go-nagios)](https://github.com/atc0005/go-nagios)
 [![Lint and Build](https://github.com/atc0005/go-nagios/actions/workflows/lint-and-build.yml/badge.svg)](https://github.com/atc0005/go-nagios/actions/workflows/lint-and-build.yml)
 [![Project Analysis](https://github.com/atc0005/go-nagios/actions/workflows/project-analysis.yml/badge.svg)](https://github.com/atc0005/go-nagios/actions/workflows/project-analysis.yml)
 [![Push Validation](https://github.com/atc0005/go-nagios/actions/workflows/push-validation.yml/badge.svg)](https://github.com/atc0005/go-nagios/actions/workflows/push-validation.yml)
