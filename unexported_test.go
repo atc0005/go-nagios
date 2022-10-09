@@ -52,3 +52,78 @@ func TestServiceOutputIsNotInterpolated(t *testing.T) {
 		t.Errorf("\nwant %q\ngot %q", want, got)
 	}
 }
+
+// TestPerformanceDataIsNotDuplicated asserts that duplicate Performance Data
+// metrics are not collected.
+//
+// See also:
+//
+// - https://github.com/atc0005/go-nagios/issues/157
+func TestPerformanceDataIsNotDuplicated(t *testing.T) {
+
+	t.Parallel()
+
+	// Setup ExitState type the same way that client code would.
+	var nagiosExitState = ExitState{
+		LastError:      nil,
+		ExitStatusCode: StateOKExitCode,
+	}
+
+	// Collection of performance data with duplicate entries.
+	pd := []PerformanceData{
+		{
+			Label: "test1",
+			Value: "first performance data entry",
+		},
+		{
+			Label: "test1",
+			Value: "first performance data entry, repeated",
+		},
+		{
+			Label: "TEST1",
+			Value: "first performance data entry, repeated with all upper case",
+		},
+		{
+			Label: "teST1",
+			Value: "first performance data entry, repeated with mixed case",
+		},
+		{
+			Label: "test2",
+			Value: "not a duplicate",
+		},
+	}
+
+	if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+		t.Errorf("failed to add initial performance data: %v", err)
+	}
+
+	// Standalone performance data metric, duplicate of entry from first
+	// collection.
+	pd = append(pd, PerformanceData{
+		Label: "test1",
+		Value: "first performance data entry, repeated by itself",
+	})
+
+	if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+		t.Errorf("failed to append additional performance data: %v", err)
+	}
+
+	// Two unique labels, so should be just two performance data metrics.
+	want := 2
+	got := len(nagiosExitState.perfData)
+
+	if got != want {
+		t.Errorf(
+			"\nwant %d performance data metrics\ngot %d performance data metrics",
+			want,
+			got,
+		)
+	} else {
+		t.Logf(
+			"OK: \nwant %d performance data metrics\ngot %d performance data metrics",
+			want,
+			got,
+		)
+	}
+
+}
