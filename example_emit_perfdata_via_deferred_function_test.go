@@ -69,7 +69,9 @@ func Example_emitPerformanceDataViaDeferredAnonymousFunc() {
 
 	// more stuff here
 
-	nagiosExitState.ServiceOutput = OnelineCheckSummary()
+	//nolint:goconst
+	nagiosExitState.ServiceOutput = "one-line summary text here"
 
-	nagiosExitState.LongServiceOutput = DetailedPluginReport()
+	//nolint:goconst
+	nagiosExitState.LongServiceOutput = "more detailed output here"
 }

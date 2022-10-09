@@ -44,7 +44,7 @@ func Example_basicPluginStructure() {
 
 	// more stuff here
 
-	nagiosExitState.ServiceOutput = OnelineCheckSummary()
+	nagiosExitState.ServiceOutput = "one-line summary of plugin results "
 
-	nagiosExitState.LongServiceOutput = DetailedPluginReport()
+	nagiosExitState.LongServiceOutput = "more detailed output from plugin here"
 }
