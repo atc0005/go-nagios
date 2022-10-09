@@ -127,3 +127,33 @@ func TestPerformanceDataIsNotDuplicated(t *testing.T) {
 	}
 
 }
+
+// TestEmptyPerformanceDataCollectionProducesNoOutput asserts that an empty
+// Performance Data metrics collection produces no output.
+func TestEmptyPerformanceDataCollectionProducesNoOutput(t *testing.T) {
+
+	t.Parallel()
+
+	// Setup ExitState type the same way that client code would.
+	var nagiosExitState = ExitState{
+		LastError:      nil,
+		ExitStatusCode: StateOKExitCode,
+	}
+
+	var outputBuffer strings.Builder
+
+	// At this point the collected performance data collection is empty, the
+	// field used to hold the entries is nil. An attempt to process the empty
+	// collection should result in no output.
+	nagiosExitState.handlePerformanceData(&outputBuffer)
+
+	want := ""
+	got := outputBuffer.String()
+
+	if want != got {
+		t.Errorf("\nwant %q\ngot %q", want, got)
+	} else {
+		t.Logf("OK: Empty performance data collection produces no output.")
+	}
+
+}
