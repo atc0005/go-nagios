@@ -48,7 +48,9 @@ func Example_hideSections() {
 	nagiosExitState.HideErrorsSection()
 	nagiosExitState.HideThresholdsSection()
 
-	nagiosExitState.ServiceOutput = OnelineCheckSummary()
+	//nolint:goconst
+	nagiosExitState.ServiceOutput = "one-line summary text here"
 
-	nagiosExitState.LongServiceOutput = DetailedPluginReport()
+	//nolint:goconst
+	nagiosExitState.LongServiceOutput = "more detailed output here"
 }
