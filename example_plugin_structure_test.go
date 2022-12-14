@@ -18,14 +18,11 @@ var _ = "https://github.com/atc0005/go-nagios"
 // ExampleBasicPluginStructure demonstrates the basic structure for a
 // monitoring plugin that uses this package.
 func Example_basicPluginStructure() {
-	// First, create an instance of the ExitState type. Here we're
-	// optimistic and we are going to assume that all will end well. If we do
-	// not alter the exit status code later this is what will be reported to
+	// First, create an instance of the ExitState type. By default the
+	// ExitState value is configured to indicate plugin success. This should
+	// be overridden by client code to indicate the final plugin state to
 	// Nagios when the plugin exits.
-	var nagiosExitState = nagios.ExitState{
-		LastError:      nil,
-		ExitStatusCode: nagios.StateOKExitCode,
-	}
+	var nagiosExitState = nagios.New()
 
 	// Second, immediately defer ReturnCheckResults() so that it runs as the
 	// last step in your client code. If you do not defer ReturnCheckResults()

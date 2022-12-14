@@ -42,7 +42,9 @@ func TestPluginOutputIsValid(t *testing.T) {
 
 	want := pluginOutputDatastore0001
 
-	// Setup ExitState type the same way that client code would.
+	// Setup ExitState value manually. This approach does not provide the
+	// default time metric that would be provided when using the ExitState
+	// constructor.
 	nagiosExitState := nagios.ExitState{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
@@ -144,7 +146,9 @@ func TestPerformanceDataIsOnSameLineAsServiceOutput(t *testing.T) {
 
 	want := pluginOutputGH103OneLineWithPerfData
 
-	// Setup ExitState type the same way that client code would.
+	// Setup ExitState value manually. This approach does not provide the
+	// default time metric that would be provided when using the ExitState
+	// constructor.
 	nagiosExitState := nagios.ExitState{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
@@ -195,7 +199,9 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 
 	var outputBuffer strings.Builder
 
-	// Setup ExitState type the same way that client code would.
+	// Setup ExitState value manually. This approach does not provide the
+	// default time metric that would be provided when using the ExitState
+	// constructor.
 	nagiosExitState := nagios.ExitState{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
@@ -287,5 +293,124 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 
 	if d := cmp.Diff(want, got); d != "" {
 		t.Errorf("(-want, +got)\n:%s", d)
+	}
+}
+
+// TestEmptyServiceOutputAndManuallyConstructedExitStateProducesNoOutput
+// asserts that an empty ServiceOutput field produces no output when manually
+// constructing the ExitState value.
+func TestEmptyServiceOutputAndManuallyConstructedExitStateProducesNoOutput(t *testing.T) {
+	t.Parallel()
+
+	// Setup ExitState value manually. This approach does not provide the
+	// default time metric that would be provided when using the ExitState
+	// constructor.
+	nagiosExitState := nagios.ExitState{
+		LastError:      nil,
+		ExitStatusCode: nagios.StateOKExitCode,
+	}
+
+	var outputBuffer strings.Builder
+
+	// Explicitly indicate that the field is empty (default/zero value).
+	nagiosExitState.ServiceOutput = ""
+
+	nagiosExitState.SetOutputTarget(&outputBuffer)
+
+	// os.Exit calls break tests
+	nagiosExitState.SkipOSExit()
+
+	// Process exit state, emit output to our output buffer.
+	nagiosExitState.ReturnCheckResults()
+
+	want := ""
+
+	// Retrieve the output buffer content so that we can compare actual output
+	// against our expected output to assert we have a 1:1 match.
+	got := outputBuffer.String()
+
+	if d := cmp.Diff(want, got); d != "" {
+		t.Errorf("(-want, +got)\n:%s", d)
+	} else {
+		t.Logf("OK: Empty ServiceOutput field produces no output.")
+	}
+
+}
+
+// TestEmptyServiceOutputAndConstructedExitStateProducesNoOutput asserts that
+// an empty ServiceOutput field produces no output. We provide a default time
+// metric if client code does not specify one AND if there is ServiceOutput
+// content to emit.
+func TestEmptyServiceOutputAndConstructedExitStateProducesNoOutput(t *testing.T) {
+	t.Parallel()
+
+	// Setup ExitState type the same way that client code using the
+	// constructor would.
+	nagiosExitState := nagios.New()
+
+	var outputBuffer strings.Builder
+
+	// Explicitly indicate that the field is empty (default/zero value).
+	nagiosExitState.ServiceOutput = ""
+
+	nagiosExitState.SetOutputTarget(&outputBuffer)
+
+	// os.Exit calls break tests
+	nagiosExitState.SkipOSExit()
+
+	// Process exit state, emit output to our output buffer.
+	nagiosExitState.ReturnCheckResults()
+
+	want := ""
+
+	// Retrieve the output buffer content so that we can compare actual output
+	// against our expected output to assert we have a 1:1 match.
+	got := outputBuffer.String()
+
+	if d := cmp.Diff(want, got); d != "" {
+		t.Errorf("(-want, +got)\n:%s", d)
+	} else {
+		t.Logf("OK: Empty ServiceOutput field produces no output.")
+	}
+
+}
+
+// TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric
+// asserts that omitted performance data from client code produces a default
+// time metric when using the ExitState constructor.
+func TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric(t *testing.T) {
+	t.Parallel()
+
+	// Setup ExitState type the same way that client code using the
+	// constructor would.
+	nagiosExitState := nagios.New()
+
+	// Performance Data metrics are not emitted if we do not supply a
+	// ServiceOutput value.
+	nagiosExitState.ServiceOutput = "TacoTuesday"
+
+	var outputBuffer strings.Builder
+
+	nagiosExitState.SetOutputTarget(&outputBuffer)
+
+	// os.Exit calls break tests
+	nagiosExitState.SkipOSExit()
+
+	// Process exit state, emit output to our output buffer.
+	nagiosExitState.ReturnCheckResults()
+
+	want := fmt.Sprintf(
+		"%s | %s",
+		nagiosExitState.ServiceOutput,
+		"'time'=",
+	)
+
+	got := outputBuffer.String()
+
+	if !strings.Contains(got, want) {
+		t.Errorf("ERROR: Plugin output does not contain the expected time metric")
+		t.Errorf("\nwant %q\ngot %q", want, got)
+	} else {
+		t.Logf("OK: Emitted performance data contains the expected time metric.")
 	}
 }
