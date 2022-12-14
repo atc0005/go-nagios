@@ -21,16 +21,24 @@ var _ = "https://github.com/atc0005/go-nagios"
 
 // ExampleEmitPerformanceDataViaDeferredAnonymousFunc demonstrates emitting
 // plugin performance data provided via a deferred anonymous function.
+//
+// NOTE: While this example illustrates providing a time metric, this metric
+// is provided for you if using the nagios.New() constructor. If specifying
+// this value ourselves, *our* value takes precedence and the default value is
+// ignored.
 func Example_emitPerformanceDataViaDeferredAnonymousFunc() {
 
 	// Start the timer. We'll use this to emit the plugin runtime as a
 	// performance data metric.
 	pluginStart := time.Now()
 
-	// First, create an instance of the ExitState type. Here we're
-	// optimistic and we are going to assume that all will end well. If we do
-	// not alter the exit status code later this is what will be reported to
-	// Nagios when the plugin exits.
+	// First, create an instance of the ExitState type. Here we're opting to
+	// manually construct the ExitState value instead of using the constructor
+	// (mostly for contrast).
+	//
+	// We set the ExitStatusCode value to reflect a successful plugin
+	// execution. If we do not alter the exit status code later this is what
+	// will be reported to Nagios when the plugin exits.
 	var nagiosExitState = nagios.ExitState{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
@@ -57,6 +65,11 @@ func Example_emitPerformanceDataViaDeferredAnonymousFunc() {
 		// Record plugin runtime, emit this metric regardless of exit
 		// point/cause.
 		runtimeMetric := nagios.PerformanceData{
+			// NOTE: This metric is provided by default if using the provided
+			// nagios.New() constructor.
+			//
+			// If we specify this value ourselves, *our* value takes
+			// precedence and the default value is ignored.
 			Label: "time",
 			Value: fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
 		}

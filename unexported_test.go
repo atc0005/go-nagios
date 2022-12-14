@@ -9,8 +9,11 @@
 package nagios
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // TestServiceOutputIsNotInterpolated is intended to prevent further
@@ -24,7 +27,9 @@ import (
 func TestServiceOutputIsNotInterpolated(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState type the same way that client code would.
+	// Setup ExitState value manually. This approach does not provide the
+	// default time metric that would be provided when using the ExitState
+	// constructor.
 	var nagiosExitState = ExitState{
 		LastError:      nil,
 		ExitStatusCode: StateOKExitCode,
@@ -60,10 +65,11 @@ func TestServiceOutputIsNotInterpolated(t *testing.T) {
 //
 // - https://github.com/atc0005/go-nagios/issues/157
 func TestPerformanceDataIsNotDuplicated(t *testing.T) {
-
 	t.Parallel()
 
-	// Setup ExitState type the same way that client code would.
+	// Setup ExitState value manually. This approach does not provide the
+	// default time metric that would be provided when using the ExitState
+	// constructor.
 	var nagiosExitState = ExitState{
 		LastError:      nil,
 		ExitStatusCode: StateOKExitCode,
@@ -128,19 +134,23 @@ func TestPerformanceDataIsNotDuplicated(t *testing.T) {
 
 }
 
-// TestEmptyPerformanceDataCollectionProducesNoOutput asserts that an empty
-// Performance Data metrics collection produces no output.
-func TestEmptyPerformanceDataCollectionProducesNoOutput(t *testing.T) {
-
+// TestEmptyServiceOutputProducesNoOutput asserts that an empty ServiceOutput
+// field produces no output.
+func TestEmptyServiceOutputProducesNoOutput(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState type the same way that client code would.
+	// Setup ExitState value manually. This approach does not provide the
+	// default time metric that would be provided when using the ExitState
+	// constructor.
 	var nagiosExitState = ExitState{
 		LastError:      nil,
 		ExitStatusCode: StateOKExitCode,
 	}
 
 	var outputBuffer strings.Builder
+
+	// Explicitly indicate that the field is empty (default/zero value).
+	nagiosExitState.ServiceOutput = ""
 
 	// At this point the collected performance data collection is empty, the
 	// field used to hold the entries is nil. An attempt to process the empty
@@ -156,4 +166,159 @@ func TestEmptyPerformanceDataCollectionProducesNoOutput(t *testing.T) {
 		t.Logf("OK: Empty performance data collection produces no output.")
 	}
 
+}
+
+// TestEmptyPerfDataAndEmptyServiceOutputProducesNoOutput asserts that an
+// empty Performance Data metrics collection AND empty ServiceOutput produces
+// no output.
+func TestEmptyPerfDataAndEmptyServiceOutputProducesNoOutput(t *testing.T) {
+	t.Parallel()
+
+	// Setup ExitState value manually. This approach does not provide the
+	// default time metric that would be provided when using the ExitState
+	// constructor.
+	var nagiosExitState = ExitState{
+		LastError:      nil,
+		ExitStatusCode: StateOKExitCode,
+	}
+
+	var outputBuffer strings.Builder
+
+	// No output should be produced since we don't have anything in the
+	// ServiceOutput field.
+	nagiosExitState.handleServiceOutputSection(&outputBuffer)
+
+	// At this point the collected performance data collection is empty, the
+	// field used to hold the entries is nil. An attempt to process the empty
+	// collection should result in no output.
+	nagiosExitState.handlePerformanceData(&outputBuffer)
+
+	want := ""
+	got := outputBuffer.String()
+
+	if want != got {
+		t.Errorf("\nwant %q\ngot %q", want, got)
+	} else {
+		t.Logf("OK: Empty performance data collection produces no output.")
+	}
+
+}
+
+// TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric asserts
+// that an empty Performance Data metrics collection AND a constructed
+// ExitState value produces a default time metric in the output.
+func TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric(t *testing.T) {
+	t.Parallel()
+
+	// Setup ExitState type the same way that client code using the
+	// constructor would.
+	nagiosExitState := New()
+
+	// Performance Data metrics are not emitted if we do not supply a
+	// ServiceOutput value.
+	nagiosExitState.ServiceOutput = "TacoTuesday"
+
+	var outputBuffer strings.Builder
+
+	nagiosExitState.handleServiceOutputSection(&outputBuffer)
+
+	// At this point the collected performance data collection is empty, the
+	// field used to hold the entries is nil. The default time metric is
+	// inserted since client code has not specified this metric.
+	nagiosExitState.handlePerformanceData(&outputBuffer)
+
+	// Assert that the metric is present.
+	defaultTimePerfData, ok := nagiosExitState.perfData[defaultTimeMetricLabel]
+	if !ok {
+		t.Fatal("Default time performance data metric not present when client code omits metrics")
+	}
+
+	want := fmt.Sprintf(
+		"%s |%s%s",
+		nagiosExitState.ServiceOutput,
+		defaultTimePerfData.String(),
+		CheckOutputEOL,
+	)
+	got := outputBuffer.String()
+
+	if d := cmp.Diff(want, got); d != "" {
+		t.Errorf("ERROR: Emitted performance data missing default time metric.")
+		t.Errorf("(-want, +got)\n:%s", d)
+	} else {
+		t.Logf("OK: Emitted performance data contains default time metric.")
+	}
+
+}
+
+// TestNonEmptyClientPerfDataAndConstructedExitStateRetainsExistingTimeMetric
+// asserts that an existing time Performance Data metric is retained when
+// using a constructed ExitState value (which emits a default time metric in
+// the output if NOT specified by client code).
+func TestNonEmptyClientPerfDataAndConstructedExitStateRetainsExistingTimeMetric(t *testing.T) {
+	t.Parallel()
+
+	// Setup ExitState type the same way that client code using the
+	// constructor would.
+	nagiosExitState := New()
+
+	// Performance Data metrics are not emitted if we do not supply a
+	// ServiceOutput value.
+	nagiosExitState.ServiceOutput = "TacoTuesday"
+
+	var outputBuffer strings.Builder
+
+	nagiosExitState.handleServiceOutputSection(&outputBuffer)
+
+	// Emulate client code specifying a time metric. This value should not be
+	// overwritten with the default time metric.
+	clientRuntimeMetric := addTestTimeMetric(t, nagiosExitState)
+
+	// Assert that the metric is present.
+	_, ok := nagiosExitState.perfData[strings.ToLower(clientRuntimeMetric.Label)]
+	if !ok {
+		t.Fatal("Expected performance data metric from client code is missing")
+	}
+
+	// At this point the collected performance data collection is non-empty
+	// since client code has specified a time value. The default time metric
+	// should NOT be inserted since client code has specified this metric.
+	nagiosExitState.handlePerformanceData(&outputBuffer)
+
+	want := fmt.Sprintf(
+		"%s |%s%s",
+		nagiosExitState.ServiceOutput,
+		clientRuntimeMetric.String(),
+		CheckOutputEOL,
+	)
+
+	got := outputBuffer.String()
+
+	if d := cmp.Diff(want, got); d != "" {
+		t.Errorf("ERROR: Emitted performance data missing client-provided time metric.")
+		t.Errorf("(-want, +got)\n:%s", d)
+	} else {
+		t.Logf("OK: Emitted performance data retains client-provided time metric.")
+	}
+}
+
+// addTestTimeMetric attaches a test `time` performance data metric regardless
+// of whether an existing value is present in the collection. The test metric
+// is also returned as a convenience.
+func addTestTimeMetric(t *testing.T, es *ExitState) PerformanceData {
+	t.Helper()
+
+	const runtimeMetricTestVal = 9000
+	runtimeMetric := PerformanceData{
+		Label:             defaultTimeMetricLabel,
+		Value:             fmt.Sprintf("%d", runtimeMetricTestVal),
+		UnitOfMeasurement: defaultTimeMetricUnitOfMeasurement,
+	}
+
+	if es.perfData == nil {
+		es.perfData = make(map[string]PerformanceData)
+	}
+
+	es.perfData[defaultTimeMetricLabel] = runtimeMetric
+
+	return runtimeMetric
 }
