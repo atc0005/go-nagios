@@ -204,10 +204,10 @@ func TestEmptyPerfDataAndEmptyServiceOutputProducesNoOutput(t *testing.T) {
 
 }
 
-// TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric
+// TestEmptyClientPerfDataAndConstructedPluginProducesDefaultTimeMetric
 // asserts that an empty Performance Data metrics collection AND a constructed
 // Plugin value produces a default time metric in the output.
-func TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric(t *testing.T) {
+func TestEmptyClientPerfDataAndConstructedPluginProducesDefaultTimeMetric(t *testing.T) {
 	t.Parallel()
 
 	// Setup Plugin type the same way that client code using the
@@ -250,11 +250,11 @@ func TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric(t *
 
 }
 
-// TestNonEmptyClientPerfDataAndConstructedExitStateRetainsExistingTimeMetric
+// TestNonEmptyClientPerfDataAndConstructedPluginRetainsExistingTimeMetric
 // asserts that an existing time Performance Data metric is retained when
 // using a constructed Plugin value (which emits a default time metric in
 // the output if NOT specified by client code).
-func TestNonEmptyClientPerfDataAndConstructedExitStateRetainsExistingTimeMetric(t *testing.T) {
+func TestNonEmptyClientPerfDataAndConstructedPluginRetainsExistingTimeMetric(t *testing.T) {
 	t.Parallel()
 
 	// Setup Plugin type the same way that client code using the
