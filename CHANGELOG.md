@@ -28,7 +28,7 @@ The following types of changes will be recorded in this file:
 
 ## [v0.12.1] - 2022-12-15
 
-### Changed
+### Fixed
 
 - (GH-172) Replace further ExitState references
 
