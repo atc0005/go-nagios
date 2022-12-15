@@ -296,10 +296,10 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 	}
 }
 
-// TestEmptyServiceOutputAndManuallyConstructedExitStateProducesNoOutput
+// TestEmptyServiceOutputAndManuallyConstructedPluginProducesNoOutput
 // asserts that an empty ServiceOutput field produces no output when manually
 // constructing the Plugin value.
-func TestEmptyServiceOutputAndManuallyConstructedExitStateProducesNoOutput(t *testing.T) {
+func TestEmptyServiceOutputAndManuallyConstructedPluginProducesNoOutput(t *testing.T) {
 	t.Parallel()
 
 	// Setup Plugin value manually. This approach does not provide the
@@ -337,11 +337,11 @@ func TestEmptyServiceOutputAndManuallyConstructedExitStateProducesNoOutput(t *te
 
 }
 
-// TestEmptyServiceOutputAndConstructedExitStateProducesNoOutput asserts that
+// TestEmptyServiceOutputAndConstructedPluginProducesNoOutput asserts that
 // an empty ServiceOutput field produces no output. We provide a default time
 // metric if client code does not specify one AND if there is ServiceOutput
 // content to emit.
-func TestEmptyServiceOutputAndConstructedExitStateProducesNoOutput(t *testing.T) {
+func TestEmptyServiceOutputAndConstructedPluginProducesNoOutput(t *testing.T) {
 	t.Parallel()
 
 	// Setup Plugin type the same way that client code using the
@@ -375,10 +375,10 @@ func TestEmptyServiceOutputAndConstructedExitStateProducesNoOutput(t *testing.T)
 
 }
 
-// TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric
+// TestEmptyClientPerfDataAndConstructedPluginProducesDefaultTimeMetric
 // asserts that omitted performance data from client code produces a default
 // time metric when using the Plugin constructor.
-func TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric(t *testing.T) {
+func TestEmptyClientPerfDataAndConstructedPluginProducesDefaultTimeMetric(t *testing.T) {
 	t.Parallel()
 
 	// Setup Plugin type the same way that client code using the

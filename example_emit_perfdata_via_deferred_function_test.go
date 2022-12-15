@@ -65,7 +65,7 @@ func Example_emitPerformanceDataViaDeferredAnonymousFunc() {
 	defer plugin.ReturnCheckResults()
 
 	// Collect last minute details just before ending plugin execution.
-	defer func(exitState *nagios.Plugin, start time.Time) {
+	defer func(plugin *nagios.Plugin, start time.Time) {
 
 		// Record plugin runtime, emit this metric regardless of exit
 		// point/cause.
@@ -78,7 +78,7 @@ func Example_emitPerformanceDataViaDeferredAnonymousFunc() {
 			Label: "time",
 			Value: fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
 		}
-		if err := exitState.AddPerfData(false, runtimeMetric); err != nil {
+		if err := plugin.AddPerfData(false, runtimeMetric); err != nil {
 			log.Printf("failed to add time (runtime) performance data metric: %v", err)
 			plugin.Errors = append(plugin.Errors, err)
 		}
