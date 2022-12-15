@@ -18,11 +18,11 @@ var _ = "https://github.com/atc0005/go-nagios"
 // ExampleHideSections demonstrates explicitly hiding or omitting the optional
 // section headers for thresholds and errors.
 func Example_hideSections() {
-	// First, create an instance of the ExitState type. By default the
-	// ExitState value is configured to indicate plugin success. This should
-	// be overridden by client code to indicate the final plugin state to
-	// Nagios when the plugin exits.
-	var nagiosExitState = nagios.New()
+	// First, create an instance of the Plugin type. By default this value is
+	// configured to indicate a successful execution. This should be
+	// overridden by client code to indicate the final plugin state to Nagios
+	// when the plugin exits.
+	var plugin = nagios.NewPlugin()
 
 	// Second, immediately defer ReturnCheckResults() so that it runs as the
 	// last step in your client code. If you do not defer ReturnCheckResults()
@@ -37,17 +37,17 @@ func Example_hideSections() {
 	// For handling error cases, the approach is roughly the same, only you
 	// call return explicitly to end execution of the client code and allow
 	// deferred functions to run.
-	defer nagiosExitState.ReturnCheckResults()
+	defer plugin.ReturnCheckResults()
 
 	// more stuff here
 
 	// Hide/Omit these sections from plugin output
-	nagiosExitState.HideErrorsSection()
-	nagiosExitState.HideThresholdsSection()
+	plugin.HideErrorsSection()
+	plugin.HideThresholdsSection()
 
 	//nolint:goconst
-	nagiosExitState.ServiceOutput = "one-line summary text here"
+	plugin.ServiceOutput = "one-line summary text here"
 
 	//nolint:goconst
-	nagiosExitState.LongServiceOutput = "more detailed output here"
+	plugin.LongServiceOutput = "more detailed output here"
 }

@@ -34,7 +34,7 @@ var (
 	pluginOutputGH103OneLineWithPerfData string
 )
 
-// TestPluginOutputIsValid configures an ExitState value as client code would
+// TestPluginOutputIsValid configures an Plugin value as client code would
 // and then asserts that the generated output matches manually crafted test
 // data.
 func TestPluginOutputIsValid(t *testing.T) {
@@ -42,31 +42,31 @@ func TestPluginOutputIsValid(t *testing.T) {
 
 	want := pluginOutputDatastore0001
 
-	// Setup ExitState value manually. This approach does not provide the
-	// default time metric that would be provided when using the ExitState
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
 	// constructor.
-	nagiosExitState := nagios.ExitState{
+	plugin := nagios.Plugin{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
 	}
 
 	var outputBuffer strings.Builder
-	nagiosExitState.SetOutputTarget(&outputBuffer)
+	plugin.SetOutputTarget(&outputBuffer)
 
 	// os.Exit calls break tests
-	nagiosExitState.SkipOSExit()
+	plugin.SkipOSExit()
 
-	nagiosExitState.CriticalThreshold = fmt.Sprintf(
+	plugin.CriticalThreshold = fmt.Sprintf(
 		"%d%% datastore usage",
 		95,
 	)
 
-	nagiosExitState.WarningThreshold = fmt.Sprintf(
+	plugin.WarningThreshold = fmt.Sprintf(
 		"%d%% datastore usage",
 		90,
 	)
 
-	nagiosExitState.ServiceOutput =
+	plugin.ServiceOutput =
 		"OK: Datastore HUSVM-DC1-vol6 space usage (0 VMs)" +
 			" is 0.01% of 18.0TB with 18.0TB remaining" +
 			" [WARNING: 90% , CRITICAL: 95%]"
@@ -117,10 +117,10 @@ func TestPluginOutputIsValid(t *testing.T) {
 		nagios.CheckOutputEOL,
 	)
 
-	nagiosExitState.LongServiceOutput = longServiceOutputReport.String()
+	plugin.LongServiceOutput = longServiceOutputReport.String()
 
 	// Process exit state, emit output to our output buffer.
-	nagiosExitState.ReturnCheckResults()
+	plugin.ReturnCheckResults()
 
 	// Retrieve the output buffer content so that we can compare actual output
 	// against our expected output to assert we have a 1:1 match.
@@ -146,21 +146,21 @@ func TestPerformanceDataIsOnSameLineAsServiceOutput(t *testing.T) {
 
 	want := pluginOutputGH103OneLineWithPerfData
 
-	// Setup ExitState value manually. This approach does not provide the
-	// default time metric that would be provided when using the ExitState
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
 	// constructor.
-	nagiosExitState := nagios.ExitState{
+	plugin := nagios.Plugin{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
 	}
 
 	var outputBuffer strings.Builder
-	nagiosExitState.SetOutputTarget(&outputBuffer)
+	plugin.SetOutputTarget(&outputBuffer)
 
 	// os.Exit calls break tests
-	nagiosExitState.SkipOSExit()
+	plugin.SkipOSExit()
 
-	nagiosExitState.ServiceOutput =
+	plugin.ServiceOutput =
 		"OK: Datastore HUSVM-DC1-vol6 space usage (0 VMs)" +
 			" is 0.01% of 18.0TB with 18.0TB remaining" +
 			" [WARNING: 90% , CRITICAL: 95%]"
@@ -170,12 +170,12 @@ func TestPerformanceDataIsOnSameLineAsServiceOutput(t *testing.T) {
 		Value: "874ms",
 	}
 
-	if err := nagiosExitState.AddPerfData(false, pd); err != nil {
+	if err := plugin.AddPerfData(false, pd); err != nil {
 		t.Errorf("failed to add performance data: %v", err)
 	}
 
 	// Process exit state, emit output to our output buffer.
-	nagiosExitState.ReturnCheckResults()
+	plugin.ReturnCheckResults()
 
 	// Retrieve the output buffer content so that we can compare actual output
 	// against our expected output to assert we have a 1:1 match.
@@ -199,30 +199,30 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 
 	var outputBuffer strings.Builder
 
-	// Setup ExitState value manually. This approach does not provide the
-	// default time metric that would be provided when using the ExitState
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
 	// constructor.
-	nagiosExitState := nagios.ExitState{
+	plugin := nagios.Plugin{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
 	}
 
-	nagiosExitState.SetOutputTarget(&outputBuffer)
+	plugin.SetOutputTarget(&outputBuffer)
 
 	// os.Exit calls break tests
-	nagiosExitState.SkipOSExit()
+	plugin.SkipOSExit()
 
-	nagiosExitState.CriticalThreshold = fmt.Sprintf(
+	plugin.CriticalThreshold = fmt.Sprintf(
 		"%d%% datastore usage",
 		95,
 	)
 
-	nagiosExitState.WarningThreshold = fmt.Sprintf(
+	plugin.WarningThreshold = fmt.Sprintf(
 		"%d%% datastore usage",
 		90,
 	)
 
-	nagiosExitState.ServiceOutput =
+	plugin.ServiceOutput =
 		"OK: Datastore HUSVM-DC1-vol6 space usage (0 VMs)" +
 			" is 0.01% of 18.0TB with 18.0TB remaining" +
 			" [WARNING: 90% , CRITICAL: 95%]"
@@ -273,19 +273,19 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 		nagios.CheckOutputEOL,
 	)
 
-	nagiosExitState.LongServiceOutput = longServiceOutputReport.String()
+	plugin.LongServiceOutput = longServiceOutputReport.String()
 
 	pd := nagios.PerformanceData{
 		Label: "time",
 		Value: "874ms",
 	}
 
-	if err := nagiosExitState.AddPerfData(false, pd); err != nil {
+	if err := plugin.AddPerfData(false, pd); err != nil {
 		t.Errorf("failed to add performance data: %v", err)
 	}
 
 	// Process exit state, emit output to our output buffer.
-	nagiosExitState.ReturnCheckResults()
+	plugin.ReturnCheckResults()
 
 	// Retrieve the output buffer content so that we can compare actual output
 	// against our expected output to assert we have a 1:1 match.
@@ -298,14 +298,14 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 
 // TestEmptyServiceOutputAndManuallyConstructedExitStateProducesNoOutput
 // asserts that an empty ServiceOutput field produces no output when manually
-// constructing the ExitState value.
+// constructing the Plugin value.
 func TestEmptyServiceOutputAndManuallyConstructedExitStateProducesNoOutput(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState value manually. This approach does not provide the
-	// default time metric that would be provided when using the ExitState
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
 	// constructor.
-	nagiosExitState := nagios.ExitState{
+	plugin := nagios.Plugin{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
 	}
@@ -313,15 +313,15 @@ func TestEmptyServiceOutputAndManuallyConstructedExitStateProducesNoOutput(t *te
 	var outputBuffer strings.Builder
 
 	// Explicitly indicate that the field is empty (default/zero value).
-	nagiosExitState.ServiceOutput = ""
+	plugin.ServiceOutput = ""
 
-	nagiosExitState.SetOutputTarget(&outputBuffer)
+	plugin.SetOutputTarget(&outputBuffer)
 
 	// os.Exit calls break tests
-	nagiosExitState.SkipOSExit()
+	plugin.SkipOSExit()
 
 	// Process exit state, emit output to our output buffer.
-	nagiosExitState.ReturnCheckResults()
+	plugin.ReturnCheckResults()
 
 	want := ""
 
@@ -344,22 +344,22 @@ func TestEmptyServiceOutputAndManuallyConstructedExitStateProducesNoOutput(t *te
 func TestEmptyServiceOutputAndConstructedExitStateProducesNoOutput(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState type the same way that client code using the
+	// Setup Plugin type the same way that client code using the
 	// constructor would.
-	nagiosExitState := nagios.New()
+	plugin := nagios.NewPlugin()
 
 	var outputBuffer strings.Builder
 
 	// Explicitly indicate that the field is empty (default/zero value).
-	nagiosExitState.ServiceOutput = ""
+	plugin.ServiceOutput = ""
 
-	nagiosExitState.SetOutputTarget(&outputBuffer)
+	plugin.SetOutputTarget(&outputBuffer)
 
 	// os.Exit calls break tests
-	nagiosExitState.SkipOSExit()
+	plugin.SkipOSExit()
 
 	// Process exit state, emit output to our output buffer.
-	nagiosExitState.ReturnCheckResults()
+	plugin.ReturnCheckResults()
 
 	want := ""
 
@@ -377,31 +377,31 @@ func TestEmptyServiceOutputAndConstructedExitStateProducesNoOutput(t *testing.T)
 
 // TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric
 // asserts that omitted performance data from client code produces a default
-// time metric when using the ExitState constructor.
+// time metric when using the Plugin constructor.
 func TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState type the same way that client code using the
+	// Setup Plugin type the same way that client code using the
 	// constructor would.
-	nagiosExitState := nagios.New()
+	plugin := nagios.NewPlugin()
 
 	// Performance Data metrics are not emitted if we do not supply a
 	// ServiceOutput value.
-	nagiosExitState.ServiceOutput = "TacoTuesday"
+	plugin.ServiceOutput = "TacoTuesday"
 
 	var outputBuffer strings.Builder
 
-	nagiosExitState.SetOutputTarget(&outputBuffer)
+	plugin.SetOutputTarget(&outputBuffer)
 
 	// os.Exit calls break tests
-	nagiosExitState.SkipOSExit()
+	plugin.SkipOSExit()
 
 	// Process exit state, emit output to our output buffer.
-	nagiosExitState.ReturnCheckResults()
+	plugin.ReturnCheckResults()
 
 	want := fmt.Sprintf(
 		"%s | %s",
-		nagiosExitState.ServiceOutput,
+		plugin.ServiceOutput,
 		"'time'=",
 	)
 

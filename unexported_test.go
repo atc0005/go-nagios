@@ -27,10 +27,10 @@ import (
 func TestServiceOutputIsNotInterpolated(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState value manually. This approach does not provide the
-	// default time metric that would be provided when using the ExitState
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
 	// constructor.
-	var nagiosExitState = ExitState{
+	var plugin = Plugin{
 		LastError:      nil,
 		ExitStatusCode: StateOKExitCode,
 	}
@@ -47,9 +47,9 @@ func TestServiceOutputIsNotInterpolated(t *testing.T) {
 	// The input from client code is expected to be passed as-is, without
 	// formatting or interpretation of any kind.
 	want := testInput
-	nagiosExitState.ServiceOutput = testInput
+	plugin.ServiceOutput = testInput
 
-	nagiosExitState.handleServiceOutputSection(&output)
+	plugin.handleServiceOutputSection(&output)
 
 	got := output.String()
 
@@ -67,10 +67,10 @@ func TestServiceOutputIsNotInterpolated(t *testing.T) {
 func TestPerformanceDataIsNotDuplicated(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState value manually. This approach does not provide the
-	// default time metric that would be provided when using the ExitState
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
 	// constructor.
-	var nagiosExitState = ExitState{
+	var plugin = Plugin{
 		LastError:      nil,
 		ExitStatusCode: StateOKExitCode,
 	}
@@ -99,7 +99,7 @@ func TestPerformanceDataIsNotDuplicated(t *testing.T) {
 		},
 	}
 
-	if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+	if err := plugin.AddPerfData(false, pd...); err != nil {
 		t.Errorf("failed to add initial performance data: %v", err)
 	}
 
@@ -110,13 +110,13 @@ func TestPerformanceDataIsNotDuplicated(t *testing.T) {
 		Value: "first performance data entry, repeated by itself",
 	})
 
-	if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+	if err := plugin.AddPerfData(false, pd...); err != nil {
 		t.Errorf("failed to append additional performance data: %v", err)
 	}
 
 	// Two unique labels, so should be just two performance data metrics.
 	want := 2
-	got := len(nagiosExitState.perfData)
+	got := len(plugin.perfData)
 
 	if got != want {
 		t.Errorf(
@@ -139,10 +139,10 @@ func TestPerformanceDataIsNotDuplicated(t *testing.T) {
 func TestEmptyServiceOutputProducesNoOutput(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState value manually. This approach does not provide the
-	// default time metric that would be provided when using the ExitState
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
 	// constructor.
-	var nagiosExitState = ExitState{
+	var plugin = Plugin{
 		LastError:      nil,
 		ExitStatusCode: StateOKExitCode,
 	}
@@ -150,12 +150,12 @@ func TestEmptyServiceOutputProducesNoOutput(t *testing.T) {
 	var outputBuffer strings.Builder
 
 	// Explicitly indicate that the field is empty (default/zero value).
-	nagiosExitState.ServiceOutput = ""
+	plugin.ServiceOutput = ""
 
 	// At this point the collected performance data collection is empty, the
 	// field used to hold the entries is nil. An attempt to process the empty
 	// collection should result in no output.
-	nagiosExitState.handlePerformanceData(&outputBuffer)
+	plugin.handlePerformanceData(&outputBuffer)
 
 	want := ""
 	got := outputBuffer.String()
@@ -174,10 +174,10 @@ func TestEmptyServiceOutputProducesNoOutput(t *testing.T) {
 func TestEmptyPerfDataAndEmptyServiceOutputProducesNoOutput(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState value manually. This approach does not provide the
-	// default time metric that would be provided when using the ExitState
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
 	// constructor.
-	var nagiosExitState = ExitState{
+	var plugin = Plugin{
 		LastError:      nil,
 		ExitStatusCode: StateOKExitCode,
 	}
@@ -186,12 +186,12 @@ func TestEmptyPerfDataAndEmptyServiceOutputProducesNoOutput(t *testing.T) {
 
 	// No output should be produced since we don't have anything in the
 	// ServiceOutput field.
-	nagiosExitState.handleServiceOutputSection(&outputBuffer)
+	plugin.handleServiceOutputSection(&outputBuffer)
 
 	// At this point the collected performance data collection is empty, the
 	// field used to hold the entries is nil. An attempt to process the empty
 	// collection should result in no output.
-	nagiosExitState.handlePerformanceData(&outputBuffer)
+	plugin.handlePerformanceData(&outputBuffer)
 
 	want := ""
 	got := outputBuffer.String()
@@ -204,38 +204,38 @@ func TestEmptyPerfDataAndEmptyServiceOutputProducesNoOutput(t *testing.T) {
 
 }
 
-// TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric asserts
-// that an empty Performance Data metrics collection AND a constructed
-// ExitState value produces a default time metric in the output.
+// TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric
+// asserts that an empty Performance Data metrics collection AND a constructed
+// Plugin value produces a default time metric in the output.
 func TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState type the same way that client code using the
+	// Setup Plugin type the same way that client code using the
 	// constructor would.
-	nagiosExitState := New()
+	plugin := NewPlugin()
 
 	// Performance Data metrics are not emitted if we do not supply a
 	// ServiceOutput value.
-	nagiosExitState.ServiceOutput = "TacoTuesday"
+	plugin.ServiceOutput = "TacoTuesday"
 
 	var outputBuffer strings.Builder
 
-	nagiosExitState.handleServiceOutputSection(&outputBuffer)
+	plugin.handleServiceOutputSection(&outputBuffer)
 
 	// At this point the collected performance data collection is empty, the
 	// field used to hold the entries is nil. The default time metric is
 	// inserted since client code has not specified this metric.
-	nagiosExitState.handlePerformanceData(&outputBuffer)
+	plugin.handlePerformanceData(&outputBuffer)
 
 	// Assert that the metric is present.
-	defaultTimePerfData, ok := nagiosExitState.perfData[defaultTimeMetricLabel]
+	defaultTimePerfData, ok := plugin.perfData[defaultTimeMetricLabel]
 	if !ok {
 		t.Fatal("Default time performance data metric not present when client code omits metrics")
 	}
 
 	want := fmt.Sprintf(
 		"%s |%s%s",
-		nagiosExitState.ServiceOutput,
+		plugin.ServiceOutput,
 		defaultTimePerfData.String(),
 		CheckOutputEOL,
 	)
@@ -252,29 +252,29 @@ func TestEmptyClientPerfDataAndConstructedExitStateProducesDefaultTimeMetric(t *
 
 // TestNonEmptyClientPerfDataAndConstructedExitStateRetainsExistingTimeMetric
 // asserts that an existing time Performance Data metric is retained when
-// using a constructed ExitState value (which emits a default time metric in
+// using a constructed Plugin value (which emits a default time metric in
 // the output if NOT specified by client code).
 func TestNonEmptyClientPerfDataAndConstructedExitStateRetainsExistingTimeMetric(t *testing.T) {
 	t.Parallel()
 
-	// Setup ExitState type the same way that client code using the
+	// Setup Plugin type the same way that client code using the
 	// constructor would.
-	nagiosExitState := New()
+	plugin := NewPlugin()
 
 	// Performance Data metrics are not emitted if we do not supply a
 	// ServiceOutput value.
-	nagiosExitState.ServiceOutput = "TacoTuesday"
+	plugin.ServiceOutput = "TacoTuesday"
 
 	var outputBuffer strings.Builder
 
-	nagiosExitState.handleServiceOutputSection(&outputBuffer)
+	plugin.handleServiceOutputSection(&outputBuffer)
 
 	// Emulate client code specifying a time metric. This value should not be
 	// overwritten with the default time metric.
-	clientRuntimeMetric := addTestTimeMetric(t, nagiosExitState)
+	clientRuntimeMetric := addTestTimeMetric(t, plugin)
 
 	// Assert that the metric is present.
-	_, ok := nagiosExitState.perfData[strings.ToLower(clientRuntimeMetric.Label)]
+	_, ok := plugin.perfData[strings.ToLower(clientRuntimeMetric.Label)]
 	if !ok {
 		t.Fatal("Expected performance data metric from client code is missing")
 	}
@@ -282,11 +282,11 @@ func TestNonEmptyClientPerfDataAndConstructedExitStateRetainsExistingTimeMetric(
 	// At this point the collected performance data collection is non-empty
 	// since client code has specified a time value. The default time metric
 	// should NOT be inserted since client code has specified this metric.
-	nagiosExitState.handlePerformanceData(&outputBuffer)
+	plugin.handlePerformanceData(&outputBuffer)
 
 	want := fmt.Sprintf(
 		"%s |%s%s",
-		nagiosExitState.ServiceOutput,
+		plugin.ServiceOutput,
 		clientRuntimeMetric.String(),
 		CheckOutputEOL,
 	)
@@ -304,7 +304,7 @@ func TestNonEmptyClientPerfDataAndConstructedExitStateRetainsExistingTimeMetric(
 // addTestTimeMetric attaches a test `time` performance data metric regardless
 // of whether an existing value is present in the collection. The test metric
 // is also returned as a convenience.
-func addTestTimeMetric(t *testing.T, es *ExitState) PerformanceData {
+func addTestTimeMetric(t *testing.T, p *Plugin) PerformanceData {
 	t.Helper()
 
 	const runtimeMetricTestVal = 9000
@@ -314,11 +314,11 @@ func addTestTimeMetric(t *testing.T, es *ExitState) PerformanceData {
 		UnitOfMeasurement: defaultTimeMetricUnitOfMeasurement,
 	}
 
-	if es.perfData == nil {
-		es.perfData = make(map[string]PerformanceData)
+	if p.perfData == nil {
+		p.perfData = make(map[string]PerformanceData)
 	}
 
-	es.perfData[defaultTimeMetricLabel] = runtimeMetric
+	p.perfData[defaultTimeMetricLabel] = runtimeMetric
 
 	return runtimeMetric
 }

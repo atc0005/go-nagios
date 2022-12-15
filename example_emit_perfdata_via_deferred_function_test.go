@@ -23,23 +23,28 @@ var _ = "https://github.com/atc0005/go-nagios"
 // plugin performance data provided via a deferred anonymous function.
 //
 // NOTE: While this example illustrates providing a time metric, this metric
-// is provided for you if using the nagios.New() constructor. If specifying
+// is provided for you if using the nagios.NewPlugin constructor. If specifying
 // this value ourselves, *our* value takes precedence and the default value is
 // ignored.
 func Example_emitPerformanceDataViaDeferredAnonymousFunc() {
 
 	// Start the timer. We'll use this to emit the plugin runtime as a
 	// performance data metric.
+	//
+	// NOTE: While this example illustrates providing a time metric, this
+	// metric is provided for you if using the nagios.NewPlugin constructor.
+	// If specifying this value ourselves, *our* value takes precedence and
+	// the default value is ignored.
 	pluginStart := time.Now()
 
-	// First, create an instance of the ExitState type. Here we're opting to
-	// manually construct the ExitState value instead of using the constructor
+	// First, create an instance of the Plugin type. Here we're opting to
+	// manually construct the Plugin value instead of using the constructor
 	// (mostly for contrast).
 	//
 	// We set the ExitStatusCode value to reflect a successful plugin
 	// execution. If we do not alter the exit status code later this is what
 	// will be reported to Nagios when the plugin exits.
-	var nagiosExitState = nagios.ExitState{
+	var plugin = nagios.Plugin{
 		LastError:      nil,
 		ExitStatusCode: nagios.StateOKExitCode,
 	}
@@ -57,16 +62,16 @@ func Example_emitPerformanceDataViaDeferredAnonymousFunc() {
 	// For handling error cases, the approach is roughly the same, only you
 	// call return explicitly to end execution of the client code and allow
 	// deferred functions to run.
-	defer nagiosExitState.ReturnCheckResults()
+	defer plugin.ReturnCheckResults()
 
 	// Collect last minute details just before ending plugin execution.
-	defer func(exitState *nagios.ExitState, start time.Time) {
+	defer func(exitState *nagios.Plugin, start time.Time) {
 
 		// Record plugin runtime, emit this metric regardless of exit
 		// point/cause.
 		runtimeMetric := nagios.PerformanceData{
 			// NOTE: This metric is provided by default if using the provided
-			// nagios.New() constructor.
+			// nagios.NewPlugin constructor.
 			//
 			// If we specify this value ourselves, *our* value takes
 			// precedence and the default value is ignored.
@@ -75,16 +80,16 @@ func Example_emitPerformanceDataViaDeferredAnonymousFunc() {
 		}
 		if err := exitState.AddPerfData(false, runtimeMetric); err != nil {
 			log.Printf("failed to add time (runtime) performance data metric: %v", err)
-			nagiosExitState.Errors = append(nagiosExitState.Errors, err)
+			plugin.Errors = append(plugin.Errors, err)
 		}
 
-	}(&nagiosExitState, pluginStart)
+	}(&plugin, pluginStart)
 
 	// more stuff here
 
 	//nolint:goconst
-	nagiosExitState.ServiceOutput = "one-line summary text here"
+	plugin.ServiceOutput = "one-line summary text here"
 
 	//nolint:goconst
-	nagiosExitState.LongServiceOutput = "more detailed output here"
+	plugin.LongServiceOutput = "more detailed output here"
 }

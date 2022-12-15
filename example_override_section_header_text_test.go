@@ -18,11 +18,11 @@ var _ = "https://github.com/atc0005/go-nagios"
 // ExampleOverrideSectionHeaders demonstrates overriding the default text with
 // values that better fit our use case.
 func Example_overrideSectionHeaders() {
-	// First, create an instance of the ExitState type. By default the
-	// ExitState value is configured to indicate plugin success. This should
-	// be overridden by client code to indicate the final plugin state to
-	// Nagios when the plugin exits.
-	var nagiosExitState = nagios.New()
+	// First, create an instance of the Plugin type. By default this value is
+	// configured to indicate a successful execution. This should be
+	// overridden by client code to indicate the final plugin state to Nagios
+	// when the plugin exits.
+	var plugin = nagios.NewPlugin()
 
 	// Second, immediately defer ReturnCheckResults() so that it runs as the
 	// last step in your client code. If you do not defer ReturnCheckResults()
@@ -37,11 +37,11 @@ func Example_overrideSectionHeaders() {
 	// For handling error cases, the approach is roughly the same, only you
 	// call return explicitly to end execution of the client code and allow
 	// deferred functions to run.
-	defer nagiosExitState.ReturnCheckResults()
+	defer plugin.ReturnCheckResults()
 
 	// more stuff here
 
 	// Override default section headers with our custom values.
-	nagiosExitState.SetErrorsLabel("VALIDATION ERRORS")
-	nagiosExitState.SetDetailedInfoLabel("VALIDATION CHECKS REPORT")
+	plugin.SetErrorsLabel("VALIDATION ERRORS")
+	plugin.SetDetailedInfoLabel("VALIDATION CHECKS REPORT")
 }
