@@ -223,7 +223,6 @@ func (r Range) checkOutsideRange(valueAsAFloat float64) bool {
 // ParseRangeString static method to construct a Range object
 // from the string representation based on the definition here:
 // https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
-
 func ParseRangeString(input string) *Range {
 
 	r := Range{}
@@ -574,6 +573,9 @@ func (p *Plugin) AddPerfData(skipValidate bool, perfData ...PerformanceData) err
 	return nil
 }
 
+// EvaluateThreshold causes the performance data to be checked against
+// the Warn and Crit provided and set the ExitStatusCode of the plugin
+// as is appropriate
 func (p *Plugin) EvaluateThreshold(perfData ...PerformanceData) error {
 	for i := range perfData {
 
