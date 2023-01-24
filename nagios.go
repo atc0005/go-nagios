@@ -173,11 +173,11 @@ type PerformanceData struct {
 // and critical, this format is defined here:
 // https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
 type Range struct {
-	Start          float64
-	Start_Infinity bool
-	End            float64
-	End_Infinity   bool
-	AlertOn        string
+	StartInfinity bool
+	EndInfinity   bool
+	AlertOn       string
+	Start         float64
+	End           float64
 }
 
 // CheckRange returns Returns true if an alert should be raised,
@@ -197,19 +197,19 @@ func (r Range) CheckRange(value string) bool {
 // "outside" ranges in a cleanish way
 func (r Range) checkOutsideRange(valueAsAFloat float64) bool {
 
-	if r.End_Infinity == false && r.Start_Infinity == false {
+	if r.EndInfinity == false && r.StartInfinity == false {
 		if r.Start <= valueAsAFloat && valueAsAFloat <= r.End {
 			return false
 		} else {
 			return true
 		}
-	} else if r.Start_Infinity == false && r.End_Infinity == true {
+	} else if r.StartInfinity == false && r.EndInfinity == true {
 		if valueAsAFloat >= r.Start {
 			return false
 		} else {
 			return true
 		}
-	} else if r.Start_Infinity == true && r.End_Infinity == false {
+	} else if r.StartInfinity == true && r.EndInfinity == false {
 		if valueAsAFloat <= r.End {
 			return false
 		} else {
@@ -233,9 +233,9 @@ func ParseRangeString(input string) *Range {
 	endOfRange := regexp.MustCompile(`^(?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?$`)
 
 	r.Start = 0
-	r.Start_Infinity = false
+	r.StartInfinity = false
 	r.End = 0
-	r.End_Infinity = false
+	r.EndInfinity = false
 	r.AlertOn = "OUTSIDE"
 
 	valid := true
@@ -251,7 +251,7 @@ func ParseRangeString(input string) *Range {
 	}
 	// ~ represents infinity
 	if strings.HasPrefix(input, "~") {
-		r.Start_Infinity = true
+		r.StartInfinity = true
 		input = input[1:]
 	}
 
@@ -260,10 +260,10 @@ func ParseRangeString(input string) *Range {
 	if rangeComponents != nil {
 		if rangeComponents[0][1] != "" {
 			r.Start, _ = strconv.ParseFloat(rangeComponents[0][1], 64)
-			r.Start_Infinity = false
+			r.StartInfinity = false
 		}
 
-		r.End_Infinity = true
+		r.EndInfinity = true
 		input = strings.TrimPrefix(input, rangeComponents[0][0])
 		valid = true
 	}
@@ -273,11 +273,11 @@ func ParseRangeString(input string) *Range {
 	if endOfRangeComponents != nil {
 
 		r.End, _ = strconv.ParseFloat(endOfRangeComponents[0][0], 64)
-		r.End_Infinity = false
+		r.EndInfinity = false
 		valid = true
 	}
 
-	if valid && (r.Start_Infinity || r.End_Infinity || r.Start <= r.End) {
+	if valid && (r.StartInfinity || r.EndInfinity || r.Start <= r.End) {
 		return &r
 	} else {
 		return nil

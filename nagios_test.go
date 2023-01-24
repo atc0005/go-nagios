@@ -19,7 +19,7 @@ func TestThis(t *testing.T) {
 	t.Run("Test N to infinity or alert", func(t *testing.T) {
 		parsedThing := ParseRangeString("10:")
 		assert.Equal(t, parsedThing.Start, 10.0)
-		assert.Equal(t, parsedThing.End_Infinity, true)
+		assert.Equal(t, parsedThing.EndInfinity, true)
 		assert.Equal(t, parsedThing.CheckRange("10"), false)
 		assert.Equal(t, parsedThing.CheckRange("9"), true)
 		assert.Equal(t, parsedThing.CheckRange("-1"), true)
@@ -28,7 +28,7 @@ func TestThis(t *testing.T) {
 
 	t.Run("Within a range involving -inf", func(t *testing.T) {
 		parsedThing := ParseRangeString("~:30")
-		assert.Equal(t, parsedThing.Start_Infinity, true)
+		assert.Equal(t, parsedThing.StartInfinity, true)
 		assert.Equal(t, parsedThing.End, 30.0)
 		assert.Equal(t, parsedThing.CheckRange("5"), false)
 		assert.Equal(t, parsedThing.CheckRange("-10"), false)
