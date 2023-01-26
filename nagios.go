@@ -12,7 +12,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -165,6 +167,122 @@ type PerformanceData struct {
 	// Max is in class [-0-9.] and must be the same UOM as Value and Min. Max
 	// is not required if UOM=%. An empty string is permitted.
 	Max string
+}
+
+// Range represents the thresholds that the user can pass in for warning
+// and critical, this format is defined here:
+// https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
+type Range struct {
+	StartInfinity bool
+	EndInfinity   bool
+	AlertOn       string
+	Start         float64
+	End           float64
+}
+
+// CheckRange returns Returns true if an alert should be raised,
+// otherwise false
+func (r Range) CheckRange(value string) bool {
+
+	valueAsAFloat, _ := strconv.ParseFloat(value, 64)
+	isOutsideRange := r.checkOutsideRange(valueAsAFloat)
+	if r.AlertOn == "INSIDE" {
+		return !isOutsideRange
+	}
+	return isOutsideRange
+}
+
+// checkOutsideRange returns in the inverse of CheckRange
+// it is used to handle the inverting logic of "inside" vs
+// "outside" ranges in a cleanish way
+func (r Range) checkOutsideRange(valueAsAFloat float64) bool {
+
+	if r.EndInfinity == false && r.StartInfinity == false {
+		if r.Start <= valueAsAFloat && valueAsAFloat <= r.End {
+			return false
+		} else {
+			return true
+		}
+	} else if r.StartInfinity == false && r.EndInfinity == true {
+		if valueAsAFloat >= r.Start {
+			return false
+		} else {
+			return true
+		}
+	} else if r.StartInfinity == true && r.EndInfinity == false {
+		if valueAsAFloat <= r.End {
+			return false
+		} else {
+			return true
+		}
+	} else {
+		return false
+	}
+}
+
+// ParseRangeString static method to construct a Range object
+// from the string representation based on the definition here:
+// https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
+func ParseRangeString(input string) *Range {
+
+	r := Range{}
+
+	digitOrInfinity := regexp.MustCompile(`[\d~]`)
+	optionalInvertAndRange := regexp.MustCompile(`^\@?((?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?|~)?(:((?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?)?)?$`)
+	firstHalfOfRange := regexp.MustCompile(`^((?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?)?:`)
+	endOfRange := regexp.MustCompile(`^(?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?$`)
+
+	r.Start = 0
+	r.StartInfinity = false
+	r.End = 0
+	r.EndInfinity = false
+	r.AlertOn = "OUTSIDE"
+
+	valid := true
+
+	if !(digitOrInfinity.MatchString(input) && optionalInvertAndRange.MatchString(input)) { //not match regex
+		return nil
+	}
+
+	// invert the range, i.e. @10:20 means ≥ 10 and ≤ 20, (inside the range of {10 .. 20} inclusive)
+	if strings.HasPrefix(input, "@") {
+		r.AlertOn = "INSIDE"
+		input = input[1:]
+	}
+	// ~ represents infinity
+	if strings.HasPrefix(input, "~") {
+		r.StartInfinity = true
+		input = input[1:]
+	}
+
+	// 10:
+	rangeComponents := firstHalfOfRange.FindAllStringSubmatch(input, -1)
+	if rangeComponents != nil {
+		if rangeComponents[0][1] != "" {
+			r.Start, _ = strconv.ParseFloat(rangeComponents[0][1], 64)
+			r.StartInfinity = false
+		}
+
+		r.EndInfinity = true
+		input = strings.TrimPrefix(input, rangeComponents[0][0])
+		valid = true
+	}
+
+	// x:10 or 10
+	endOfRangeComponents := endOfRange.FindAllStringSubmatch(input, -1)
+	if endOfRangeComponents != nil {
+
+		r.End, _ = strconv.ParseFloat(endOfRangeComponents[0][0], 64)
+		r.EndInfinity = false
+		valid = true
+	}
+
+	if valid && (r.StartInfinity || r.EndInfinity || r.Start <= r.End) {
+		return &r
+	} else {
+		return nil
+	}
+
 }
 
 // Validate performs basic validation of PerformanceData. An error is returned
@@ -450,6 +568,35 @@ func (p *Plugin) AddPerfData(skipValidate bool, perfData ...PerformanceData) err
 
 	for _, pd := range perfData {
 		p.perfData[strings.ToLower(pd.Label)] = pd
+	}
+
+	return nil
+}
+
+// EvaluateThreshold causes the performance data to be checked against
+// the Warn and Crit provided and set the ExitStatusCode of the plugin
+// as is appropriate
+func (p *Plugin) EvaluateThreshold(perfData ...PerformanceData) error {
+	for i := range perfData {
+
+		if perfData[i].Crit != "" {
+
+			CriticalThresholdObject := ParseRangeString(perfData[i].Crit)
+
+			if CriticalThresholdObject.CheckRange(perfData[i].Value) {
+				p.ExitStatusCode = StateCRITICALExitCode
+				return nil
+			}
+		}
+
+		if perfData[i].Warn != "" {
+			warningThresholdObject := ParseRangeString(perfData[i].Warn)
+
+			if warningThresholdObject.CheckRange(perfData[i].Value) {
+				p.ExitStatusCode = StateWARNINGExitCode
+				return nil
+			}
+		}
 	}
 
 	return nil
