@@ -1,3 +1,11 @@
+// Copyright 2023 Codeweavers Ltd
+// Copyright 2023 Adam Chalkley
+//
+// https://github.com/atc0005/go-nagios
+//
+// Licensed under the MIT License. See LICENSE file in the project root for
+// full license information.
+
 package nagios
 
 import (
@@ -6,9 +14,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Best documentation for this is: https://www.monitoring-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
+// TestParseRange asserts that the Threshold and Range parsing and evaluation
+// functionality works as expected.
+//
+// See the [Nagios Plugin Dev Guidelines: Threshold and Ranges] definition for
+// additional details.
+//
+// [Nagios Plugin Dev Guidelines: Threshold and Ranges]: https://nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
+func TestParseRange(t *testing.T) {
 
-func TestThis(t *testing.T) {
+	const pluginServiceOutput string = "CHECK-NT-REPLACEMENT"
+
 	t.Run("Test 0 to N or alert", func(t *testing.T) {
 		parsedThing := ParseRangeString("10")
 		assert.Equal(t, parsedThing.End, 10.0)
@@ -84,6 +100,7 @@ func TestThis(t *testing.T) {
 		assert.Equal(t, parsedThing.CheckRange("-32"), false)
 		assert.Equal(t, parsedThing.CheckRange("-1"), false)
 	})
+
 	t.Run("Alert on value 32", func(t *testing.T) {
 		parsedThing := ParseRangeString("@32:32")
 
@@ -95,11 +112,11 @@ func TestThis(t *testing.T) {
 		assert.Equal(t, parsedThing.CheckRange("-1"), false)
 	})
 
-	t.Run("Plugin should return exit code OK when value is within accetptable range", func(t *testing.T) {
+	t.Run("Plugin should return exit code OK when value is within acceptable range", func(t *testing.T) {
 		var plugin = Plugin{
 			ExitStatusCode: StateOKExitCode,
 		}
-		plugin.ServiceOutput = "CHECK-NT-REPLACEMENT"
+		plugin.ServiceOutput = pluginServiceOutput
 
 		perfdata := PerformanceData{
 			Label:             "perfdata label",
@@ -108,8 +125,8 @@ func TestThis(t *testing.T) {
 			Warn:              "5:30",
 			Crit:              "0:40",
 		}
-		plugin.AddPerfData(false, perfdata)
-		plugin.EvaluateThreshold(perfdata)
+		assert.NoError(t, plugin.AddPerfData(false, perfdata))
+		assert.NoError(t, plugin.EvaluateThreshold(perfdata))
 
 		assert.Equal(t, StateOKExitCode, plugin.ExitStatusCode)
 	})
@@ -118,7 +135,7 @@ func TestThis(t *testing.T) {
 		var plugin = Plugin{
 			ExitStatusCode: StateOKExitCode,
 		}
-		plugin.ServiceOutput = "CHECK-NT-REPLACEMENT"
+		plugin.ServiceOutput = pluginServiceOutput
 
 		perfdata := PerformanceData{
 			Label:             "perfdata label",
@@ -127,8 +144,8 @@ func TestThis(t *testing.T) {
 			Warn:              "5:30",
 			Crit:              "0:40",
 		}
-		plugin.AddPerfData(false, perfdata)
-		plugin.EvaluateThreshold(perfdata)
+		assert.NoError(t, plugin.AddPerfData(false, perfdata))
+		assert.NoError(t, plugin.EvaluateThreshold(perfdata))
 
 		assert.Equal(t, StateWARNINGExitCode, plugin.ExitStatusCode)
 	})
@@ -137,7 +154,7 @@ func TestThis(t *testing.T) {
 		var plugin = Plugin{
 			ExitStatusCode: StateOKExitCode,
 		}
-		plugin.ServiceOutput = "CHECK-NT-REPLACEMENT"
+		plugin.ServiceOutput = pluginServiceOutput
 
 		perfdata := PerformanceData{
 			Label:             "perfdata label",
@@ -146,8 +163,8 @@ func TestThis(t *testing.T) {
 			Warn:              "5:30",
 			Crit:              "0:40",
 		}
-		plugin.AddPerfData(false, perfdata)
-		plugin.EvaluateThreshold(perfdata)
+		assert.NoError(t, plugin.AddPerfData(false, perfdata))
+		assert.NoError(t, plugin.EvaluateThreshold(perfdata))
 
 		assert.Equal(t, StateWARNINGExitCode, plugin.ExitStatusCode)
 	})
@@ -156,7 +173,7 @@ func TestThis(t *testing.T) {
 		var plugin = Plugin{
 			ExitStatusCode: StateOKExitCode,
 		}
-		plugin.ServiceOutput = "CHECK-NT-REPLACEMENT"
+		plugin.ServiceOutput = pluginServiceOutput
 
 		perfdata := PerformanceData{
 			Label:             "perfdata label",
@@ -165,8 +182,8 @@ func TestThis(t *testing.T) {
 			Warn:              "5:30",
 			Crit:              "0:40",
 		}
-		plugin.AddPerfData(false, perfdata)
-		plugin.EvaluateThreshold(perfdata)
+		assert.NoError(t, plugin.AddPerfData(false, perfdata))
+		assert.NoError(t, plugin.EvaluateThreshold(perfdata))
 
 		assert.Equal(t, StateCRITICALExitCode, plugin.ExitStatusCode)
 	})
@@ -175,7 +192,7 @@ func TestThis(t *testing.T) {
 		var plugin = Plugin{
 			ExitStatusCode: StateOKExitCode,
 		}
-		plugin.ServiceOutput = "CHECK-NT-REPLACEMENT"
+		plugin.ServiceOutput = pluginServiceOutput
 
 		perfdata := PerformanceData{
 			Label:             "perfdata label",
@@ -184,8 +201,8 @@ func TestThis(t *testing.T) {
 			Warn:              "5:30",
 			Crit:              "0:40",
 		}
-		plugin.AddPerfData(false, perfdata)
-		plugin.EvaluateThreshold(perfdata)
+		assert.NoError(t, plugin.AddPerfData(false, perfdata))
+		assert.NoError(t, plugin.EvaluateThreshold(perfdata))
 
 		assert.Equal(t, StateCRITICALExitCode, plugin.ExitStatusCode)
 	})
