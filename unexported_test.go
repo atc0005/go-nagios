@@ -77,25 +77,25 @@ func TestPerformanceDataIsNotDuplicated(t *testing.T) {
 
 	// Collection of performance data with duplicate entries.
 	pd := []PerformanceData{
-		{
+		{ // first performance data entry
 			Label: "test1",
-			Value: "first performance data entry",
+			Value: "1",
 		},
-		{
+		{ // repeated
 			Label: "test1",
-			Value: "first performance data entry, repeated",
+			Value: "1",
 		},
-		{
+		{ // repeated with Label in all upper case
 			Label: "TEST1",
-			Value: "first performance data entry, repeated with all upper case",
+			Value: "1",
 		},
-		{
+		{ // repeated with Label in mixed case
 			Label: "teST1",
-			Value: "first performance data entry, repeated with mixed case",
+			Value: "1",
 		},
-		{
+		{ // first non-duplicate Label
 			Label: "test2",
-			Value: "not a duplicate",
+			Value: "1",
 		},
 	}
 
@@ -107,7 +107,7 @@ func TestPerformanceDataIsNotDuplicated(t *testing.T) {
 	// collection.
 	pd = append(pd, PerformanceData{
 		Label: "test1",
-		Value: "first performance data entry, repeated by itself",
+		Value: "1",
 	})
 
 	if err := plugin.AddPerfData(false, pd...); err != nil {
