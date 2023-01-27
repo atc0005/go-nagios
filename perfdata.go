@@ -200,23 +200,41 @@ func ParsePerfData(rawPerfdata string) ([]PerformanceData, error) {
 	return results, nil
 }
 
-// Validate performs basic validation of PerformanceData. An error is returned
-// for any validation failures.
+// Validate performs basic validation of PerformanceData fields using logic
+// specified in the [Nagios Plugin Dev Guidelines]. An error is returned for
+// any validation failures.
+//
+// [Nagios Plugin Dev Guidelines]: https://nagios-plugins.org/doc/guidelines.html#AEN200
 func (pd PerformanceData) Validate() error {
-
-	// Validate fields
-	switch {
-	case pd.Label == "":
-		return ErrPerformanceDataMissingLabel
-	case pd.Value == "":
-		return ErrPerformanceDataMissingValue
-
-	// TODO: Expand validation
-	// https://nagios-plugins.org/doc/guidelines.html
-	default:
-		return nil
-
+	if err := validatePerfDataLabelField(pd.Label); err != nil {
+		return err
 	}
+
+	if err := validatePerfDataValueField(pd.Value); err != nil {
+		return err
+	}
+
+	if err := validatePerfDataUoMField(pd.UnitOfMeasurement); err != nil {
+		return err
+	}
+
+	if err := validatePerfDataWarnField(pd.Warn); err != nil {
+		return err
+	}
+
+	if err := validatePerfDataCritField(pd.Crit); err != nil {
+		return err
+	}
+
+	if err := validatePerfDataMinField(pd.Min); err != nil {
+		return err
+	}
+
+	if err := validatePerfDataMaxField(pd.Max); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // String provides a PerformanceData metric in format ready for use in plugin
