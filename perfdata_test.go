@@ -387,7 +387,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 			},
 		},
 
-		"All Statuspage components single quoted with semicolon separators": {
+		"All Statuspage components single quoted with all semicolon separators": {
 			// NOTE: While the specific values from this test case are off
 			// (components in a warning state compared to all problem
 			// components), the metrics collection is still in a valid format.
@@ -513,6 +513,75 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 				{
 					Label:             "time",
 					Value:             "283",
+					UnitOfMeasurement: "ms",
+					Warn:              "",
+					Crit:              "",
+					Min:               "",
+					Max:               "",
+				},
+			},
+		},
+
+		"check_cert plugin metrics single quoted with all semicolon separators": {
+			input: `'certs_present_intermediate'=2;;;; 'certs_present_leaf'=1;;;; 'certs_present_root'=0;;;; 'certs_present_unknown'=0;;;; 'expires_intermediate'=1703d;30;15;; 'expires_leaf'=62d;30;15;; 'time'=41ms;;;;`,
+			result: []nagios.PerformanceData{
+				{
+					Label:             "certs_present_intermediate",
+					Value:             "2",
+					UnitOfMeasurement: "",
+					Warn:              "",
+					Crit:              "",
+					Min:               "",
+					Max:               "",
+				},
+				{
+					Label:             "certs_present_leaf",
+					Value:             "1",
+					UnitOfMeasurement: "",
+					Warn:              "",
+					Crit:              "",
+					Min:               "",
+					Max:               "",
+				},
+				{
+					Label:             "certs_present_root",
+					Value:             "0",
+					UnitOfMeasurement: "",
+					Warn:              "",
+					Crit:              "",
+					Min:               "",
+					Max:               "",
+				},
+				{
+					Label:             "certs_present_unknown",
+					Value:             "0",
+					UnitOfMeasurement: "",
+					Warn:              "",
+					Crit:              "",
+					Min:               "",
+					Max:               "",
+				},
+				{
+					Label:             "expires_intermediate",
+					Value:             "1703",
+					UnitOfMeasurement: "d",
+					Warn:              "30",
+					Crit:              "15",
+					Min:               "",
+					Max:               "",
+				},
+				{
+					Label:             "expires_leaf",
+					Value:             "62",
+					UnitOfMeasurement: "d",
+					Warn:              "30",
+					Crit:              "15",
+					Min:               "",
+					Max:               "",
+				},
+				{
+					Label:             "time",
+					Value:             "41",
 					UnitOfMeasurement: "ms",
 					Warn:              "",
 					Crit:              "",
