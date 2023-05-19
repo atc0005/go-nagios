@@ -18,17 +18,25 @@ import (
 // per https://go.dev/blog/examples.
 var _ = "https://github.com/atc0005/go-nagios"
 
-// ExampleUsingOnlyTheProvidedConstants is a simple example that illustrates
+// Example_usingOnlyTheProvidedExitCodeConstants is a simple example that
+// illustrates using only the provided exit code constants from this package.
+// After you've imported this library, reference the exported data types as
+// you would from any other package.
+func Example_usingOnlyTheProvidedExitCodeConstants() {
+	// In this example, we reference a specific exit code for the OK state:
+	fmt.Println("OK: All checks have passed")
+
+	os.Exit(nagios.StateOKExitCode)
+}
+
+// Example_usingOnlyTheProvidedConstants is a simple example that illustrates
 // using only the provided constants from this package. After you've imported
 // this library, reference the exported data types as you would from any other
 // package.
 func Example_usingOnlyTheProvidedConstants() {
-	// In this example, we reference a specific exit code for the OK state:
-	fmt.Println("OK: All checks have passed")
-	os.Exit(nagios.StateOKExitCode)
-
-	// You can also use the provided state "labels" to avoid using literal
-	// string state values (recommended):
+	// In this example, we reference a specific exit code for the OK state and
+	// also use the provided state "labels" to avoid using literal string
+	// state values (recommended):
 	fmt.Printf(
 		"%s: All checks have passed%s",
 		nagios.StateOKLabel,
@@ -36,5 +44,4 @@ func Example_usingOnlyTheProvidedConstants() {
 	)
 
 	os.Exit(nagios.StateOKExitCode)
-
 }
