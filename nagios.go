@@ -373,6 +373,25 @@ func (p *Plugin) AddError(errs ...error) {
 	p.Errors = append(p.Errors, errs...)
 }
 
+// AddUniqueError appends provided errors to the collection if they are not
+// already present. If a given error is already in the collection then it will
+// be skipped.
+//
+// Errors are evaluated using case-insensitive string comparison.
+func (p *Plugin) AddUniqueError(errs ...error) {
+	existingErrStrings := make([]string, 0, len(p.Errors))
+	for i := range p.Errors {
+		existingErrStrings[i] = p.Errors[i].Error()
+	}
+
+	for _, err := range errs {
+		if inList(err.Error(), existingErrStrings, true) {
+			continue
+		}
+		p.Errors = append(p.Errors, err)
+	}
+}
+
 // SetOutputTarget assigns a target for Nagios plugin output. By default
 // output is emitted to os.Stdout.
 func (p *Plugin) SetOutputTarget(w io.Writer) {
