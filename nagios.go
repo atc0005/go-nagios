@@ -366,8 +366,11 @@ func (p *Plugin) AddPerfData(skipValidate bool, perfData ...PerformanceData) err
 }
 
 // AddError appends provided errors to the collection.
-func (p *Plugin) AddError(err ...error) {
-	p.Errors = append(p.Errors, err...)
+//
+// NOTE: Deduplication of errors is *not* performed. The caller is responsible
+// for ensuring that a given error is not already recorded in the collection.
+func (p *Plugin) AddError(errs ...error) {
+	p.Errors = append(p.Errors, errs...)
 }
 
 // SetOutputTarget assigns a target for Nagios plugin output. By default
