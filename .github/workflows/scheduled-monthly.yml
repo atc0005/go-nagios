@@ -15,7 +15,14 @@ on:
     # * * * * *
     - cron: "30 4 1 * *"
 
+  # Allow triggering workflow manually
+  # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch
+  workflow_dispatch:
+
 jobs:
   monthly:
     name: Monthly Tasks
     uses: atc0005/shared-project-resources/.github/workflows/scheduled-monthly.yml@master
+    with:
+      build-packages: false
+      build-podman-release: false
