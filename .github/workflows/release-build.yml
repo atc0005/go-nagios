@@ -1,0 +1,32 @@
+# See LICENSE file in this repo for license details.
+
+name: Release Build
+
+on:
+  push:
+    tags:
+      # Match any semver tag, rely on the imported workflow to apply necessary
+      # logic to separate "stable" release builds from "prerelease" builds.
+      - "v[0-9]+.[0-9]+.*"
+
+jobs:
+  release_build:
+    name: Generate release build
+
+    # https://docs.github.com/en/actions/security-guides/automatic-token-authentication
+    permissions:
+      contents: write
+      discussions: write
+
+    uses: atc0005/shared-project-resources/.github/workflows/release-build.yml@master
+    with:
+      # NOTE: Library projects such as atc0005/go-nagios or
+      # atc0005/go-teams-notify explicitly set this value to false to avoid
+      # generating release assets as part of creating an automated release
+      # upon pushing a tag.
+      #
+      # See also:
+      #
+      # - https://github.com/atc0005/shared-project-resources/pull/141
+      #
+      generate-assets: false
