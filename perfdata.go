@@ -38,7 +38,7 @@ const (
 
 	// perfDataThresholdRangeSyntaxRegex represents the regex character class
 	// used to validate and parse the Warn and Crit fields.
-	perfDataThresholdRangeSyntaxRegex string = `(^\d+$)|(^\d+:$)|(^~:\d+$)|(^\d+:\d+$)|(^@\d+$)|(^@\d+:$)|(^@~:\d+$)|(^@\d+:\d+$)|(^~:$)`
+	perfDataThresholdRangeSyntaxRegex string = `(?:(^[+-]?\d+(?:\.\d+)?$))|(?:(^[+-]?\d+(?:\.\d+)?:$))|(?:(^~:[+-]?\d+(?:\.\d+)?$))|(?:(^[+-]?\d+(?:\.\d+)?):([+-]?\d+(?:\.\d+)?$))|(?:(^@[+-]?\d+(?:\.\d+)?$))|(?:(^@[+-]?\d+(?:\.\d+)?:$))|(?:(^@~:[+-]?\d+(?:\.\d+)?$))|(?:(^@[+-]?\d+(?:\.\d+)?):([+-]?\d+(?:\.\d+)?$))|(?:^~:$)`
 
 	// perfDataLabelFieldDisallowedCharacters are the characters disallowed in
 	// the Label field; the equals sign and single quote characters are not
