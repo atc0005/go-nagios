@@ -66,6 +66,7 @@ func TestPluginOutputIsValid(t *testing.T) {
 		90,
 	)
 
+	//nolint:goconst
 	plugin.ServiceOutput =
 		"OK: Datastore HUSVM-DC1-vol6 space usage (0 VMs)" +
 			" is 0.01% of 18.0TB with 18.0TB remaining" +
@@ -160,6 +161,7 @@ func TestPerformanceDataIsOnSameLineAsServiceOutput(t *testing.T) {
 	// os.Exit calls break tests
 	plugin.SkipOSExit()
 
+	//nolint:goconst
 	plugin.ServiceOutput =
 		"OK: Datastore HUSVM-DC1-vol6 space usage (0 VMs)" +
 			" is 0.01% of 18.0TB with 18.0TB remaining" +
@@ -222,6 +224,7 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 		90,
 	)
 
+	//nolint:goconst
 	plugin.ServiceOutput =
 		"OK: Datastore HUSVM-DC1-vol6 space usage (0 VMs)" +
 			" is 0.01% of 18.0TB with 18.0TB remaining" +
