@@ -80,9 +80,9 @@ func ParseRangeString(input string) *Range {
 	r := Range{}
 
 	digitOrInfinity := regexp.MustCompile(`[\d~]`)
-	optionalInvertAndRange := regexp.MustCompile(`^\@?((?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?|~)?(:((?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?)?)?$`)
-	firstHalfOfRange := regexp.MustCompile(`^((?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?)?:`)
-	endOfRange := regexp.MustCompile(`^(?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?$`)
+	optionalInvertAndRange := regexp.MustCompile(`^@?([-+]?[\d.]+(?:e[-+]?[\d.]+)?|~)?(:([-+]?[\d.]+(?:e[-+]?[\d.]+)?)?)?$`)
+	firstHalfOfRange := regexp.MustCompile(`^([-+]?[\d.]+(?:e[-+]?[\d.]+)?)?:`)
+	endOfRange := regexp.MustCompile(`^[-+]?[\d.]+(?:e[-+]?[\d.]+)?$`)
 
 	r.Start = 0
 	r.StartInfinity = false
