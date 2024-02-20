@@ -38,7 +38,33 @@ const (
 
 	// perfDataThresholdRangeSyntaxRegex represents the regex character class
 	// used to validate and parse the Warn and Crit fields.
-	perfDataThresholdRangeSyntaxRegex string = `[0-9~@:]+`
+	//
+	// This huge regexp is constructed from smaller regexpes joined
+	// with | (alternation - logical OR) operator. Each of this smaller regexp
+	// tries to capture one case from [Nagios Plugin Dev Guidelines].
+	// Note: This could be merged into shorter more complex regexp
+	// but it is kept it such long form for readability.
+	//
+	// [Nagios Plugin Dev Guidelines]: https://nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
+	//
+	// First one matches just single integer of float number with optional minus sign (ex. 1, 1.5, -1, -1.5)
+	perfDataThresholdRangeSyntaxRegex string = `(?:(^[-]?\d+(?:\.\d+)?$))` +
+		// range from x to +∞ (ex. 1:, 1.5:, -1:, -1.5:)
+		`|(?:(^[-]?\d+(?:\.\d+)?:$))` +
+		// range from -∞ to x (ex.~:-1, ~:0.1, ~:1, ~:-0.1)
+		`|(?:(^~:[-]?\d+(?:\.\d+)?$))` +
+		// range from x to y (ex. 0:1, 0.1:1.1, -5:0.4, -5.1:-1)
+		`|(?:(^[-]?\d+(?:\.\d+)?):([-]?\d+(?:\.\d+)?$))` +
+		// single integer or float preceded with @ (ex. @1, @1.1, @-1, @-1.1)
+		`|(?:(^@[-]?\d+(?:\.\d+)?$))` +
+		// range from x to +∞ with reversed inclusion (ex. @1:,@1.5:, @-1:, @-1.5:)
+		`|(?:(^@[-]?\d+(?:\.\d+)?:$))` +
+		// range from -∞ to x with reversed inclusion (ex.@~:-1, @~:0.1, @~:1, @~:-0.1)
+		`|(?:(^@~:[-]?\d+(?:\.\d+)?$))` +
+		// range from x to y with reversed inclusion (ex. @0:1, @0.1:1.1, @-5:0.4, @-5.1:-1)
+		`|(?:(^@[-]?\d+(?:\.\d+)?):([-]?\d+(?:\.\d+)?$))` +
+		// range from -∞ to +∞
+		`|(?:^~:$)`
 
 	// perfDataLabelFieldDisallowedCharacters are the characters disallowed in
 	// the Label field; the equals sign and single quote characters are not

@@ -96,6 +96,9 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 		// parsing the input performance data string and the implicit overall
 		// results count.
 		result []nagios.PerformanceData
+
+		// wantErr informs if we are expecting error for this testcase (true) or not
+		wantErr bool
 	}{
 		"Load averages double quoted": {
 			// https://github.com/nagios-plugins/nagios-plugins/blob/12446aea1d353d891cd6291ba8086a0f5247c93d/plugins/check_load.c#L206-L210
@@ -129,6 +132,23 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "",
 				},
 			},
+			wantErr: false,
+		},
+		"Negative floats double quoted": {
+			// https://github.com/nagios-plugins/nagios-plugins/blob/12446aea1d353d891cd6291ba8086a0f5247c93d/plugins/check_load.c#L206-L210
+			input: `"so_negative=-0.260;-5.000;-10.000;-50;"`,
+			result: []nagios.PerformanceData{
+				{
+					Label:             "so_negative",
+					Value:             "-0.260",
+					UnitOfMeasurement: "",
+					Warn:              "-5.000",
+					Crit:              "-10.000",
+					Min:               "-50",
+					Max:               "",
+				},
+			},
+			wantErr: false,
 		},
 
 		"Load averages unquoted": {
@@ -163,6 +183,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "",
 				},
 			},
+			wantErr: false,
 		},
 
 		"Single quoted time metric label with all semicolon separators": {
@@ -178,6 +199,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "",
 				},
 			},
+			wantErr: false,
 		},
 
 		"Single quoted time metric label with one trailing semicolon separator": {
@@ -193,6 +215,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "",
 				},
 			},
+			wantErr: false,
 		},
 
 		"Single quoted time metric label without semicolon separators": {
@@ -208,6 +231,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "",
 				},
 			},
+			wantErr: false,
 		},
 
 		"Disk usage labels single quoted": {
@@ -241,6 +265,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "476",
 				},
 			},
+			wantErr: false,
 		},
 
 		"Disk usage unquoted": {
@@ -274,6 +299,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "476",
 				},
 			},
+			wantErr: false,
 		},
 
 		"Processes unquoted": {
@@ -289,6 +315,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "",
 				},
 			},
+			wantErr: false,
 		},
 
 		"VMware Snapshots Age single quoted with all semicolon separators": {
@@ -385,6 +412,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "",
 				},
 			},
+			wantErr: false,
 		},
 
 		"All Statuspage components single quoted with all semicolon separators": {
@@ -520,6 +548,7 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "",
 				},
 			},
+			wantErr: false,
 		},
 
 		"check_cert plugin metrics single quoted with all semicolon separators": {
@@ -589,6 +618,27 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 					Max:               "",
 				},
 			},
+			wantErr: false,
+		},
+		"Single quoted time metric label with invalid thresholds set to  ::": {
+			input:   "'time'=49ms;::;;;",
+			result:  nil,
+			wantErr: true,
+		},
+		"Single quoted time metric label with invalid thresholds set to @4:~": {
+			input:   "'time'=49ms;@4:~;;;",
+			result:  nil,
+			wantErr: true,
+		},
+		"Single quoted time metric label with invalid thresholds set to ~:~": {
+			input:   "'time'=49ms;~:~;;;",
+			result:  nil,
+			wantErr: true,
+		},
+		"Single quoted time metric label with invalid thresholds set to @@": {
+			input:   "'time'=49ms;@@;;;",
+			result:  nil,
+			wantErr: true,
 		},
 	}
 
@@ -605,10 +655,9 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 			t.Logf("Evaluating input %q", tt.input)
 
 			perfDataResults, err := nagios.ParsePerfData(tt.input)
-			if err != nil {
-				t.Fatalf("failed to parse perfdata input: %v", err)
+			if (err != nil) != tt.wantErr {
+				t.Fatalf("nagios.ParsePerfData() error = %v, wantErr %v", err, tt.wantErr)
 			}
-
 			testParsePerfDataCollection(t, perfDataResults, tt.result)
 
 		})
