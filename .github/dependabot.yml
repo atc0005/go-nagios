@@ -28,7 +28,7 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "go.mod"
+      prefix: "Go Dependency"
 
   - package-ecosystem: "gomod"
     directory: "/"
@@ -45,7 +45,7 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "go.mod"
+      prefix: "Go Dependency"
 
   ######################################################################
   # Monitor GitHub Actions dependency updates
