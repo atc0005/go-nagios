@@ -67,7 +67,7 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "ghaw"
+      prefix: "CI Dependency"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -85,4 +85,4 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "ghaw"
+      prefix: "CI Dependency"
