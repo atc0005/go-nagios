@@ -590,6 +590,29 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 				},
 			},
 		},
+		"check_cert plugin lifetime metrics single quoted with all semicolon separators": {
+			input: `'life_remaining_intermediate'=48%;;;; 'life_remaining_leaf'=32%;;;;`,
+			result: []nagios.PerformanceData{
+				{
+					Label:             "life_remaining_intermediate",
+					Value:             "48",
+					UnitOfMeasurement: "%",
+					Warn:              "",
+					Crit:              "",
+					Min:               "",
+					Max:               "",
+				},
+				{
+					Label:             "life_remaining_leaf",
+					Value:             "32",
+					UnitOfMeasurement: "%",
+					Warn:              "",
+					Crit:              "",
+					Min:               "",
+					Max:               "",
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
@@ -608,6 +631,8 @@ func TestParsePerfDataSucceedsForValidInput(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to parse perfdata input: %v", err)
 			}
+
+			t.Logf("perfDataResults: %v", perfDataResults)
 
 			testParsePerfDataCollection(t, perfDataResults, tt.result)
 
