@@ -188,6 +188,25 @@ func TestParseRange(t *testing.T) {
 		assert.Equal(t, StateCRITICALExitCode, plugin.ExitStatusCode)
 	})
 
+	t.Run("Plugin should return exit code Unknown when critical range is invalid", func(t *testing.T) {
+		var plugin = Plugin{
+			ExitStatusCode: StateOKExitCode,
+		}
+		plugin.ServiceOutput = pluginServiceOutput
+
+		perfdata := PerformanceData{
+			Label:             "perfdata label",
+			Value:             "41.0",
+			UnitOfMeasurement: "C",
+			Warn:              "5:30",
+			Crit:              "0:<=20", // invalid range as critical lower than warning
+		}
+		assert.NoError(t, plugin.AddPerfData(false, perfdata))
+		assert.Error(t, plugin.EvaluateThreshold(perfdata))
+
+		assert.Equal(t, StateUNKNOWNExitCode, plugin.ExitStatusCode)
+	})
+
 	t.Run("Plugin should return exit code CRITICAL when value is within warning range", func(t *testing.T) {
 		var plugin = Plugin{
 			ExitStatusCode: StateOKExitCode,
@@ -205,5 +224,24 @@ func TestParseRange(t *testing.T) {
 		assert.NoError(t, plugin.EvaluateThreshold(perfdata))
 
 		assert.Equal(t, StateCRITICALExitCode, plugin.ExitStatusCode)
+	})
+
+	t.Run("Plugin should return exit code UNKNOWN and error when warning range is invalid", func(t *testing.T) {
+		var plugin = Plugin{
+			ExitStatusCode: StateOKExitCode,
+		}
+		plugin.ServiceOutput = pluginServiceOutput
+
+		perfdata := PerformanceData{
+			Label:             "perfdata label",
+			Value:             "-1.0",
+			UnitOfMeasurement: "C",
+			Warn:              "x20", // invalid range value
+			Crit:              "",
+		}
+		assert.NoError(t, plugin.AddPerfData(false, perfdata))
+		assert.Error(t, plugin.EvaluateThreshold(perfdata))
+
+		assert.Equal(t, StateUNKNOWNExitCode, plugin.ExitStatusCode)
 	})
 }
