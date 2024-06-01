@@ -74,7 +74,7 @@ func TestPluginOutputIsValid(t *testing.T) {
 
 	var longServiceOutputReport strings.Builder
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&longServiceOutputReport,
 		"Datastore Space Summary:%s%s"+
 			"* Name: %s%s"+
@@ -96,7 +96,7 @@ func TestPluginOutputIsValid(t *testing.T) {
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&longServiceOutputReport,
 		"%s---%s%s",
 		nagios.CheckOutputEOL,
@@ -104,14 +104,14 @@ func TestPluginOutputIsValid(t *testing.T) {
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&longServiceOutputReport,
 		"* vSphere environment: %s%s",
 		"https://vc1.example.com:443/sdk",
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&longServiceOutputReport,
 		"* Plugin User Agent: %s%s",
 		"check-vmware/v0.30.6-0-g25fdcdc",
@@ -232,7 +232,7 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 
 	var longServiceOutputReport strings.Builder
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&longServiceOutputReport,
 		"Datastore Space Summary:%s%s"+
 			"* Name: %s%s"+
@@ -254,7 +254,7 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&longServiceOutputReport,
 		"%s---%s%s",
 		nagios.CheckOutputEOL,
@@ -262,14 +262,14 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&longServiceOutputReport,
 		"* vSphere environment: %s%s",
 		"https://vc1.example.com:443/sdk",
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&longServiceOutputReport,
 		"* Plugin User Agent: %s%s",
 		"check-vmware/v0.30.6-0-g25fdcdc",
