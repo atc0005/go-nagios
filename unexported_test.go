@@ -152,10 +152,7 @@ func TestEmptyServiceOutputProducesNoOutput(t *testing.T) {
 	// Explicitly indicate that the field is empty (default/zero value).
 	plugin.ServiceOutput = ""
 
-	// At this point the collected performance data collection is empty, the
-	// field used to hold the entries is nil. An attempt to process the empty
-	// collection should result in no output.
-	plugin.handlePerformanceData(&outputBuffer)
+	plugin.handleServiceOutputSection(&outputBuffer)
 
 	want := ""
 	got := outputBuffer.String()
@@ -163,7 +160,7 @@ func TestEmptyServiceOutputProducesNoOutput(t *testing.T) {
 	if want != got {
 		t.Errorf("\nwant %q\ngot %q", want, got)
 	} else {
-		t.Logf("OK: Empty performance data collection produces no output.")
+		t.Logf("OK: Empty service output field produces no output.")
 	}
 
 }
