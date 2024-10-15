@@ -6,14 +6,46 @@
 // full license information.
 
 // Package nagios provides test coverage for unexported package functionality.
+//
+//nolint:dupl,gocognit // ignore "lines are duplicate of" and function complexity
 package nagios
 
 import (
+	_ "embed"
 	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+)
+
+// The specific format used by the test input files is VERY specific; trailing
+// space + newline patterns are intentional. Because "format on save" editor
+// functionality easily breaks this input it is stored in separate files to
+// reduce test breakage due to editors "helping".
+var (
+	//go:embed testdata/payload/small_json_payload_unencoded.txt
+	smallJSONPayloadUnencoded string
+
+	// Earlier prototyping found that the stream encoding/decoding process
+	// did not retain exclamation marks. I've not dug deep enough to
+	// determine the root cause, but have observed that using the Decode
+	// and Encode functions work reliably. Because a later refactoring
+	// might switch back to using stream processing we explicitly test
+	// using an exclamation point to guard against future breakage.
+	//
+	//go:embed testdata/payload/small_plaintext_payload_unencoded.txt
+	smallPlaintextPayloadUnencoded string
+)
+
+const (
+// Earlier prototyping found that the stream encoding/decoding process
+// did not retain exclamation marks. I've not dug deep enough to
+// determine the root cause, but have observed that using the Decode
+// and Encode functions work reliably. Because a later refactoring
+// might switch back to using stream processing we explicitly test
+// using an exclamation point to guard against future breakage.
+// smallPlaintextPayloadUnencoded string = "Hello, World!"
 )
 
 // TestServiceOutputIsNotInterpolated is intended to prevent further
@@ -163,6 +195,526 @@ func TestEmptyServiceOutputProducesNoOutput(t *testing.T) {
 		t.Logf("OK: Empty service output field produces no output.")
 	}
 
+}
+
+// TestEmptyEncodedPayloadWithDefaultDelimitersProducesNoOutput asserts that
+// an empty payload buffer with default delimiters produces no output.
+func TestEmptyEncodedPayloadWithDefaultDelimitersProducesNoOutput(t *testing.T) {
+	t.Parallel()
+
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
+	// constructor.
+	var plugin = Plugin{
+		LastError:      nil,
+		ExitStatusCode: StateOKExitCode,
+	}
+
+	var outputBuffer strings.Builder
+
+	// At this point the encoded payload buffer is empty, so any attempt to
+	// process it should result in no output.
+	plugin.handleEncodedPayload(&outputBuffer)
+
+	want := ""
+	got := outputBuffer.String()
+
+	if want != got {
+		t.Errorf("\nwant %q\ngot %q", want, got)
+	} else {
+		t.Logf("OK: Empty payload buffer produces no output.")
+	}
+}
+
+// TestEmptyEncodedPayloadWithCustomDelimitersProducesNoOutput asserts that an
+// empty payload buffer with custom delimiters set produces no output.
+func TestEmptyEncodedPayloadWithCustomDelimitersProducesNoOutput(t *testing.T) {
+	t.Parallel()
+
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
+	// constructor.
+	var plugin = Plugin{
+		LastError:      nil,
+		ExitStatusCode: StateOKExitCode,
+	}
+
+	var outputBuffer strings.Builder
+
+	delimiterLeft := DefaultASCII85EncodingDelimiterLeft
+	delimiterRight := DefaultASCII85EncodingDelimiterRight
+
+	plugin.encodedPayloadDelimiterLeft = &delimiterLeft
+	plugin.encodedPayloadDelimiterRight = &delimiterRight
+
+	// At this point the encoded payload buffer is empty, so any attempt to
+	// process it should result in no output.
+	plugin.handleEncodedPayload(&outputBuffer)
+
+	want := ""
+	got := outputBuffer.String()
+
+	if want != got {
+		t.Errorf("\nwant %q\ngot %q", want, got)
+	} else {
+		t.Logf("OK: Empty payload buffer with custom delimiters produces no output.")
+	}
+}
+
+// TestSetPayloadString_SetsInputSuccessfullyWhenCalledOnce asserts that a
+// payload buffer populated via the `SetPayloadString` method (overwrite
+// behavior) with non-repeating valid input produces valid output.
+func TestSetPayloadString_SetsInputSuccessfullyWhenCalledOnce(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input string
+	}{
+		"simple JSON value": {
+			input: smallJSONPayloadUnencoded,
+		},
+		"simple text value": {
+			input: smallPlaintextPayloadUnencoded,
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		//
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %q", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			want := tt.input
+			written, err := plugin.SetPayloadString(tt.input)
+
+			if err != nil {
+				t.Fatalf("Failed to set payload buffer to given input: %v", err)
+			} else {
+				t.Logf("Successfully set payload buffer to %d bytes given input", written)
+			}
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
+}
+
+// TestSetPayloadString_SetsInputSuccessfullyWhenCalledMultipleTimes asserts
+// that a payload buffer populated via the `SetPayloadString` method
+// (overwrite behavior) with repeating valid input produces valid output.
+func TestSetPayloadString_SetsInputSuccessfullyWhenCalledMultipleTimes(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input string
+	}{
+		"simple JSON value": {
+			input: smallJSONPayloadUnencoded,
+		},
+		"simple text value": {
+			input: smallPlaintextPayloadUnencoded,
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %q", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			repeat := 2
+			for i := 0; i < repeat+1; i++ {
+				written, err := plugin.SetPayloadString(tt.input)
+
+				if err != nil {
+					t.Fatalf("Failed to set payload buffer to given input: %v", err)
+				} else {
+					t.Logf("Successfully set payload buffer to %d bytes given input", written)
+				}
+			}
+
+			// Repeat function call (with overwrite behavior) should produce
+			// non-repeating output.
+			want := tt.input
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
+}
+
+// TestSetPayloadBytes_SetsInputSuccessfullyWhenCalledOnce asserts that a
+// payload buffer populated via the `SetPayloadBytes` method (overwrite
+// behavior) with non-repeating valid input produces valid output.
+func TestSetPayloadBytes_SetsInputSuccessfullyWhenCalledOnce(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input []byte
+	}{
+		"simple JSON value": {
+			input: []byte(smallJSONPayloadUnencoded),
+		},
+		"simple text value": {
+			input: []byte(smallPlaintextPayloadUnencoded),
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		//
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %q", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			want := string(tt.input)
+			written, err := plugin.SetPayloadBytes(tt.input)
+
+			if err != nil {
+				t.Fatalf("Failed to set payload buffer to given input: %v", err)
+			} else {
+				t.Logf("Successfully set payload buffer to %d bytes given input", written)
+			}
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
+}
+
+// TestSetPayloadBytes_SetsInputSuccessfullyWhenCalledMultipleTimes asserts that a
+// payload buffer populated via the `SetPayloadBytes` method (overwrite
+// behavior) with repeating valid input produces valid output.
+func TestSetPayloadBytes_SetsInputSuccessfullyWhenCalledMultipleTimes(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input []byte
+	}{
+		"simple JSON value": {
+			input: []byte(smallJSONPayloadUnencoded),
+		},
+		"simple text value": {
+			input: []byte(smallPlaintextPayloadUnencoded),
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %q", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			repeat := 2
+			for i := 0; i < repeat+1; i++ {
+				written, err := plugin.SetPayloadBytes(tt.input)
+
+				if err != nil {
+					t.Fatalf("Failed to set payload buffer to given input: %v", err)
+				} else {
+					t.Logf("Successfully set payload buffer to %d bytes given input", written)
+				}
+			}
+
+			// Repeat function call (with overwrite behavior) should produce
+			// non-repeating output.
+			want := string(tt.input)
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
+}
+
+// TestAddPayloadString_AppendsInputSuccessfullyWhenCalledOnce asserts that a
+// payload buffer populated via the `AddPayloadString` method with
+// non-repeating valid input produces valid output.
+func TestAddPayloadString_AppendsInputSuccessfullyWhenCalledOnce(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input string
+	}{
+		"simple JSON value": {
+			input: smallJSONPayloadUnencoded,
+		},
+		"simple text value": {
+			input: smallPlaintextPayloadUnencoded,
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		//
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %q", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			want := tt.input
+			written, err := plugin.AddPayloadString(tt.input)
+
+			if err != nil {
+				t.Fatalf("Failed to add given input to payload buffer: %v", err)
+			} else {
+				t.Logf("Successfully added %d bytes given input to payload buffer", written)
+			}
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
+}
+
+// TestAddPayloadString_AppendsInputSuccessfullyWhenCalledMultipleTimes
+// asserts that a payload buffer populated via the `AddPayloadString` method
+// with repeating valid input produces valid output.
+func TestAddPayloadString_AppendsInputSuccessfullyWhenCalledMultipleTimes(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input string
+	}{
+		"simple JSON value": {
+			input: smallJSONPayloadUnencoded,
+		},
+		"simple text value": {
+			input: smallPlaintextPayloadUnencoded,
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %q", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			repeat := 2
+			for i := 0; i < repeat+1; i++ {
+				written, err := plugin.AddPayloadString(tt.input)
+
+				if err != nil {
+					t.Fatalf("Failed to add given input to payload buffer: %v", err)
+				} else {
+					t.Logf("Successfully added %d bytes given input to payload buffer", written)
+				}
+			}
+
+			// Repeat function call should produce appended output.
+			var want string
+			for i := 0; i < repeat+1; i++ {
+				want += tt.input
+			}
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
+}
+
+// TestAddPayloadBytes_AppendsInputSuccessfullyWhenCalledOnce asserts that a
+// payload buffer populated via the `AddPayloadBytes` method with
+// non-repeating valid input produces valid output.
+func TestAddPayloadBytes_AppendsInputSuccessfullyWhenCalledOnce(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input []byte
+	}{
+		"simple JSON value": {
+			input: []byte(smallJSONPayloadUnencoded),
+		},
+		"simple text value": {
+			input: []byte(smallPlaintextPayloadUnencoded),
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		//
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %q", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			want := string(tt.input)
+			written, err := plugin.AddPayloadBytes(tt.input)
+
+			if err != nil {
+				t.Fatalf("Failed to add given input to payload buffer: %v", err)
+			} else {
+				t.Logf("Successfully added %d bytes given input to payload buffer", written)
+			}
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
+}
+
+// TestAddPayloadBytes_AppendsInputSuccessfullyWhenCalledMultipleTimes
+// asserts that a payload buffer populated via the `AddPayloadBytes` method
+// with repeating valid input produces valid output.
+func TestAddPayloadBytes_AppendsInputSuccessfullyWhenCalledMultipleTimes(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input []byte
+	}{
+		"simple JSON value": {
+			input: []byte(smallJSONPayloadUnencoded),
+		},
+		"simple text value": {
+			input: []byte(smallPlaintextPayloadUnencoded),
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %q", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			repeat := 2
+			for i := 0; i < repeat+1; i++ {
+				written, err := plugin.AddPayloadBytes(tt.input)
+
+				if err != nil {
+					t.Fatalf("Failed to add given input to payload buffer: %v", err)
+				} else {
+					t.Logf("Successfully added %d bytes given input to payload buffer", written)
+				}
+			}
+
+			// Repeat function call should produce appended output.
+			var want string
+			for i := 0; i < repeat+1; i++ {
+				want += string(tt.input)
+			}
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
 }
 
 // TestEmptyPerfDataAndEmptyServiceOutputProducesNoOutput asserts that an
