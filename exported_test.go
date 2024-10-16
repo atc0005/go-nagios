@@ -1322,6 +1322,12 @@ func TestExtractAndDecodeASCII85Payload_FailsToExtractAndDecodePayloadWithInvali
 			this value is what we're left with:
 				\x90\xac8 \x04\x9f\xe6\xc2\xfe\x87\x91\x1a\xa6\x85'\xce2
 
+			Reproduce via:
+				fmt.Printf("%+q\n", decodedPayload)
+
+			See also:
+			https://go.dev/blog/strings
+
 		This in no way represents the encoded payload nor the original
 		extracted & decoded payload we would expect to see.
 	*/
