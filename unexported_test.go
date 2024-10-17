@@ -13,6 +13,7 @@ package nagios
 import (
 	_ "embed"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 
@@ -47,6 +48,59 @@ const (
 // using an exclamation point to guard against future breakage.
 // smallPlaintextPayloadUnencoded string = "Hello, World!"
 )
+
+func TestPluginSetOutputTargetIsValidWithValidInput(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	// Assert that plugin.outputSink is still unset
+	if plugin.outputSink != nil {
+		t.Fatal("ERROR: plugin outputSink is not at the expected default unset value.")
+	} else {
+		t.Log("OK: plugin outputSink is at the expected default unset value.")
+	}
+
+	var outputBuffer strings.Builder
+
+	plugin.SetOutputTarget(&outputBuffer)
+
+	// Assert that plugin.outputSink is set as expected.
+	switch {
+	case plugin.outputSink == nil:
+		t.Fatal("ERROR: plugin outputSink is unset instead of the given custom value.")
+	case plugin.outputSink == os.Stdout:
+		t.Fatal("ERROR: plugin outputSink is set to the default/fallback value instead of the expected custom value.")
+	default:
+		t.Log("OK: plugin outputSink is at the expected custom value.")
+	}
+}
+
+// TestPluginSetOutputTargetIsValidWithInvalidInput asserts that when given an
+// invalid output target that the method falls back to a safe default value.
+func TestPluginSetOutputTargetIsValidWithInvalidInput(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	// Assert that plugin.outputSink is still unset
+	if plugin.outputSink != nil {
+		t.Fatal("ERROR: plugin outputSink is not at the expected default unset value.")
+	} else {
+		t.Log("OK: plugin outputSink is at the expected default unset value.")
+	}
+
+	t.Log("Attempting to set invalid output target. This should cause the default output sink to be set instead.")
+	plugin.SetOutputTarget(nil)
+
+	// Assert that plugin.outputSink is set to a non-nil default/fallback
+	// value as expected.
+	if plugin.outputSink == nil {
+		t.Fatal("ERROR: plugin outputSink is not at the expected default/fallback value.")
+	} else {
+		t.Log("OK: plugin outputSink is at the expected default/fallback value.")
+	}
+}
 
 // TestServiceOutputIsNotInterpolated is intended to prevent further
 // regressions of formatting being applied to literal/preformatted Service
