@@ -420,6 +420,12 @@ func (p *Plugin) SkipOSExit() {
 	p.shouldSkipOSExit = true
 }
 
+// defaultPluginOutputTarget returns the fallback/default plugin output target
+// used when a user-specified value is not provided.
+func defaultPluginOutputTarget() io.Writer {
+	return os.Stdout
+}
+
 // emitOutput writes final plugin output to the previously set output target.
 // No further modifications to plugin output are performed.
 func (p Plugin) emitOutput(pluginOutput string) {
