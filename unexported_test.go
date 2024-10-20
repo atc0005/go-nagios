@@ -93,11 +93,12 @@ func TestPluginSetOutputTargetIsValidWithInvalidInput(t *testing.T) {
 	t.Log("Attempting to set invalid output target. This should cause the default output sink to be set instead.")
 	plugin.SetOutputTarget(nil)
 
-	// Assert that plugin.outputSink is set to a non-nil default/fallback
-	// value as expected.
-	if plugin.outputSink == nil {
+	switch {
+	case plugin.outputSink == nil:
+		t.Fatal("ERROR: plugin outputSink is still unset.")
+	case plugin.outputSink != defaultPluginOutputTarget():
 		t.Fatal("ERROR: plugin outputSink is not at the expected default/fallback value.")
-	} else {
+	default:
 		t.Log("OK: plugin outputSink is at the expected default/fallback value.")
 	}
 }
