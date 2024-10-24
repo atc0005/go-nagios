@@ -13,7 +13,6 @@ package nagios
 import (
 	_ "embed"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -69,7 +68,7 @@ func TestPluginSetOutputTargetIsValidWithValidInput(t *testing.T) {
 	switch {
 	case plugin.outputSink == nil:
 		t.Fatal("ERROR: plugin outputSink is unset instead of the given custom value.")
-	case plugin.outputSink == os.Stdout:
+	case plugin.outputSink == defaultPluginOutputTarget():
 		t.Fatal("ERROR: plugin outputSink is set to the default/fallback value instead of the expected custom value.")
 	default:
 		t.Log("OK: plugin outputSink is at the expected custom value.")
