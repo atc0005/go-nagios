@@ -97,17 +97,17 @@ func ParseRangeString(input string) *Range {
 		return nil
 	}
 
+	switch {
 	// Invert the range.
 	//
 	// i.e. @10:20 means ≥ 10 and ≤ 20 (inside the range of {10 .. 20}
 	// inclusive)
-	if strings.HasPrefix(input, "@") {
+	case strings.HasPrefix(input, "@"):
 		r.AlertOn = "INSIDE"
 		input = input[1:]
-	}
 
 	// ~ represents infinity
-	if strings.HasPrefix(input, "~") {
+	case strings.HasPrefix(input, "~"):
 		r.StartInfinity = true
 		input = input[1:]
 	}
