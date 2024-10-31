@@ -47,29 +47,54 @@ func (r Range) CheckRange(value string) bool {
 //
 // [Nagios Plugin Dev Guidelines: Threshold and Ranges]: https://nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
 func (r Range) checkOutsideRange(valueAsAFloat float64) bool {
-	switch {
-	case !r.EndInfinity && !r.StartInfinity:
-		if r.Start <= valueAsAFloat && valueAsAFloat <= r.End {
-			return false
-		}
-		return true
+	// This alternative implementation was provided by Google Gemini (model
+	// 'Gemini 1.5 Flash').
+	//
+	// Explanation of the logic:
+	//
+	// Infinite Bounds:
+	//
+	// If the start is infinite, the value is outside the range only if it's
+	// greater than the end. If the end is infinite, the value is outside the
+	// range only if it's less than the start.
+	//
+	// Finite Bounds:
+	//
+	// The value is outside the range if it's either less than the start or
+	// greater than the end.
 
-	case !r.StartInfinity && r.EndInfinity:
-		if valueAsAFloat >= r.Start {
-			return false
-		}
-		return true
-
-	case r.StartInfinity && !r.EndInfinity:
-		if valueAsAFloat <= r.End {
-			return false
-		}
-		return true
-
-	default:
-		return false
+	// Handle infinite bounds first
+	if r.StartInfinity {
+		return valueAsAFloat > r.End
+	} else if r.EndInfinity {
+		return valueAsAFloat < r.Start
 	}
+
+	// Handle finite bounds
+	return valueAsAFloat < r.Start || valueAsAFloat > r.End
 }
+
+// checkOutsideRange is provided by ChatGPT (model 'GPT-4o') as a
+// simplification of the original checkOutsideRange function.
+// func (r Range) checkOutsideRange(value float64) bool {
+// 	// Explanation of the Simplification:
+// 	//
+// 	// Each case is now focused only on the conditions that make the value
+// 	// outside the range. The final default case covers the fully infinite
+// 	// range, simplifying the logic to just return false since no bounds
+// 	// restrict the range.
+//
+// 	switch {
+// 	case !r.StartInfinity && value < r.Start:
+// 		return true
+// 	case !r.EndInfinity && value > r.End:
+// 		return true
+// 	case r.StartInfinity && r.EndInfinity:
+// 		return false
+// 	default:
+// 		return false
+// 	}
+// }
 
 // ParseRangeString static method to construct a Range object from the string
 // representation based on the [Nagios Plugin Dev Guidelines: Threshold and
