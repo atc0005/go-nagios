@@ -102,64 +102,56 @@ func (r Range) checkOutsideRange(valueAsAFloat float64) bool {
 //
 // [Nagios Plugin Dev Guidelines: Threshold and Ranges]: https://nagios-plugins.org/doc/guidelines.html#THRESHOLDFORMAT
 func ParseRangeString(input string) *Range {
-	r := Range{}
+	// Initialize range with default values
+	r := Range{
+		Start:         0,
+		End:           0,
+		StartInfinity: false,
+		EndInfinity:   false,
+		AlertOn:       "OUTSIDE",
+	}
 
+	// Define regular expressions
 	digitOrInfinity := regexp.MustCompile(`[\d~]`)
 	optionalInvertAndRange := regexp.MustCompile(`^@?([-+]?[\d.]+(?:e[-+]?[\d.]+)?|~)?(:([-+]?[\d.]+(?:e[-+]?[\d.]+)?)?)?$`)
 	firstHalfOfRange := regexp.MustCompile(`^([-+]?[\d.]+(?:e[-+]?[\d.]+)?)?:`)
 	endOfRange := regexp.MustCompile(`^[-+]?[\d.]+(?:e[-+]?[\d.]+)?$`)
 
-	r.Start = 0
-	r.StartInfinity = false
-	r.End = 0
-	r.EndInfinity = false
-	r.AlertOn = "OUTSIDE"
-
-	valid := true
-
-	// If regex does not match ...
+	// Validate input format
 	if !(digitOrInfinity.MatchString(input) && optionalInvertAndRange.MatchString(input)) {
 		return nil
 	}
 
-	// Invert the range.
-	//
-	// i.e. @10:20 means ≥ 10 and ≤ 20 (inside the range of {10 .. 20}
-	// inclusive)
-	if strings.HasPrefix(input, "@") {
+	switch {
+	// Parse alert inversion (starts with @)
+	case strings.HasPrefix(input, "@"):
 		r.AlertOn = "INSIDE"
 		input = input[1:]
-	}
 
-	// ~ represents infinity
-	if strings.HasPrefix(input, "~") {
+	// Parse start infinity (~ symbol at start)
+	case strings.HasPrefix(input, "~"):
 		r.StartInfinity = true
 		input = input[1:]
 	}
 
-	// 10:
-	rangeComponents := firstHalfOfRange.FindAllStringSubmatch(input, -1)
-	if rangeComponents != nil {
-		if rangeComponents[0][1] != "" {
-			r.Start, _ = strconv.ParseFloat(rangeComponents[0][1], 64)
+	// Parse start of range (e.g., "10:")
+	if rangeComponents := firstHalfOfRange.FindStringSubmatch(input); rangeComponents != nil {
+		if rangeComponents[1] != "" {
+			r.Start, _ = strconv.ParseFloat(rangeComponents[1], 64)
 			r.StartInfinity = false
 		}
-
 		r.EndInfinity = true
-		input = strings.TrimPrefix(input, rangeComponents[0][0])
-		valid = true
+		input = strings.TrimPrefix(input, rangeComponents[0])
 	}
 
-	// x:10 or 10
-	endOfRangeComponents := endOfRange.FindAllStringSubmatch(input, -1)
-	if endOfRangeComponents != nil {
-
-		r.End, _ = strconv.ParseFloat(endOfRangeComponents[0][0], 64)
+	// Parse end of range (e.g., "10" or "x:10")
+	if endOfRangeComponents := endOfRange.FindStringSubmatch(input); endOfRangeComponents != nil {
+		r.End, _ = strconv.ParseFloat(endOfRangeComponents[0], 64)
 		r.EndInfinity = false
-		valid = true
 	}
 
-	if valid && (r.StartInfinity || r.EndInfinity || r.Start <= r.End) {
+	// Ensure valid range boundaries
+	if r.StartInfinity || r.EndInfinity || r.Start <= r.End {
 		return &r
 	}
 
