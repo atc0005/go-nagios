@@ -5,6 +5,9 @@
 //
 // Licensed under the MIT License. See LICENSE file in the project root for
 // full license information.
+//
+// Portions of the code in this file inspired by or generated with the help of
+// ChatGPT and Google Gemini.
 
 package nagios
 
@@ -163,36 +166,39 @@ func ParseRangeString(input string) *Range {
 // ExitStatusCode of the plugin as appropriate.
 func (p *Plugin) EvaluateThreshold(perfData ...PerformanceData) error {
 	for i := range perfData {
-
-		if perfData[i].Crit != "" {
-
-			CriticalThresholdObject := ParseRangeString(perfData[i].Crit)
-			if CriticalThresholdObject == nil {
-				err := fmt.Errorf("failed to parse critical range string %s: %w ", perfData[i].Crit, ErrInvalidRangeThreshold)
-				p.ExitStatusCode = StateUNKNOWNExitCode
-				return err
-			}
-
-			if CriticalThresholdObject.CheckRange(perfData[i].Value) {
-				p.ExitStatusCode = StateCRITICALExitCode
-				return nil
-			}
+		// Evaluate critical threshold
+		if inCritical, err := evaluateThreshold(perfData[i].Crit, perfData[i].Value); err != nil {
+			p.ExitStatusCode = StateUNKNOWNExitCode
+			return err
+		} else if inCritical {
+			p.ExitStatusCode = StateCRITICALExitCode
+			return nil
 		}
 
-		if perfData[i].Warn != "" {
-			warningThresholdObject := ParseRangeString(perfData[i].Warn)
-			if warningThresholdObject == nil {
-				err := fmt.Errorf("failed to parse warning range string %s: %w ", perfData[i].Warn, ErrInvalidRangeThreshold)
-				p.ExitStatusCode = StateUNKNOWNExitCode
-				return err
-			}
-
-			if warningThresholdObject.CheckRange(perfData[i].Value) {
-				p.ExitStatusCode = StateWARNINGExitCode
-				return nil
-			}
+		// Evaluate warning threshold
+		if inWarning, err := evaluateThreshold(perfData[i].Warn, perfData[i].Value); err != nil {
+			p.ExitStatusCode = StateUNKNOWNExitCode
+			return err
+		} else if inWarning {
+			p.ExitStatusCode = StateWARNINGExitCode
+			return nil
 		}
 	}
 
 	return nil
+}
+
+// evaluateThreshold is a helper function used to handle both parsing and
+// range-checking, taking rangeStr (the threshold string), value, and
+// exitCode. If the parsing fails, it returns an error to simplify error
+// handling within the caller.
+func evaluateThreshold(rangeStr, value string) (bool, error) {
+	if rangeStr == "" {
+		return false, nil // Skip empty thresholds
+	}
+	thresholdObj := ParseRangeString(rangeStr)
+	if thresholdObj == nil {
+		return false, fmt.Errorf("failed to parse range string %s: %w", rangeStr, ErrInvalidRangeThreshold)
+	}
+	return thresholdObj.CheckRange(value), nil
 }
