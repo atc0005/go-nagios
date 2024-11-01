@@ -428,6 +428,72 @@ func TestSetPayloadString_SetsInputSuccessfullyWhenCalledMultipleTimes(t *testin
 	}
 }
 
+// TestSetPayloadString_SetsInputSuccessfullyWhenCalledWithEmptyInput asserts
+// that when given input the `SetPayloadString` method (with overwrite
+// behavior) resets the payload buffer without returning an error or producing
+// any output.
+func TestSetPayloadString_SetsInputSuccessfullyWhenCalledWithEmptyInput(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input string
+	}{
+		"empty string": {
+			input: "",
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %q", tt.input)
+
+			// We skip explicitly resetting the buffer as we do not expect it
+			// to change.
+			//
+			// plugin.encodedPayloadBuffer.Reset()
+
+			repeat := 2
+			for i := 0; i < repeat+1; i++ {
+				written, err := plugin.SetPayloadString(tt.input)
+
+				if err != nil {
+					t.Fatalf("Error occurred processing given empty input: %v", err)
+				}
+
+				if written > 0 {
+					t.Fatalf("Unexpected write of %d bytes to payload buffer", written)
+				} else {
+					t.Logf("Successfully handled %d bytes given input", written)
+				}
+			}
+
+			// Repeat function call (with overwrite behavior) should normally
+			// produce non-repeating output. In our case we processed empty
+			// input; the buffer should remain empty no matter how many times
+			// we provided empty input.
+			want := tt.input
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches given empty input.")
+			}
+		})
+	}
+}
+
 // TestSetPayloadBytes_SetsInputSuccessfullyWhenCalledOnce asserts that a
 // payload buffer populated via the `SetPayloadBytes` method (overwrite
 // behavior) with non-repeating valid input produces valid output.
@@ -536,6 +602,80 @@ func TestSetPayloadBytes_SetsInputSuccessfullyWhenCalledMultipleTimes(t *testing
 				t.Errorf("(-want, +got)\n:%s", d)
 			} else {
 				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
+}
+
+// TestSetPayloadBytes_SetsInputSuccessfullyWhenCalledWithEmptyInput asserts
+// that when given input the `SetPayloadBytes` method (with overwrite
+// behavior) resets the payload buffer without returning an error or producing
+// any output.
+func TestSetPayloadBytes_SetsInputSuccessfullyWhenCalledWithEmptyInput(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		// This represents data as given before it is written to the
+		// payload buffer (unencoded).
+		input []byte
+	}{
+		"empty string": {
+			input: []byte(""),
+		},
+		"empty byte slice": {
+			input: []byte{},
+		},
+		"nil": {
+			input: nil,
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %#v", tt.input)
+
+			// We skip explicitly resetting the buffer as we do not expect it
+			// to change.
+			//
+			// plugin.encodedPayloadBuffer.Reset()
+
+			repeat := 2
+			for i := 0; i < repeat+1; i++ {
+				written, err := plugin.SetPayloadBytes(tt.input)
+
+				if err != nil {
+					t.Fatalf("Error occurred processing given empty input: %v", err)
+				}
+
+				if written > 0 {
+					t.Fatalf("Unexpected write of %d bytes to payload buffer", written)
+				} else {
+					t.Logf("Successfully handled %d bytes given input", written)
+				}
+			}
+
+			// Repeat function call (with overwrite behavior) should normally
+			// produce non-repeating output. In our case we processed empty
+			// input; the buffer should remain empty no matter how many times
+			// we provided empty input.
+			want := tt.input
+			got := plugin.encodedPayloadBuffer.Bytes()
+
+			// We compare by length to handle comparison of empty byte slice
+			// to nil.
+			if len(want) != len(got) {
+				d := cmp.Diff(want, got)
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer length reflects given empty input.")
 			}
 		})
 	}
@@ -656,6 +796,66 @@ func TestAddPayloadString_AppendsInputSuccessfullyWhenCalledMultipleTimes(t *tes
 	}
 }
 
+// TestAddPayloadString_AppendsNothingWhenCalledWithEmptyInput asserts that
+// when given empty input the `AddPayloadString` method does not return an
+// error and produces no output.
+func TestAddPayloadString_AppendsNothingWhenCalledWithEmptyInput(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		input string
+	}{
+		"empty string": {
+			input: "",
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %#v", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			repeat := 2
+			for i := 0; i < repeat+1; i++ {
+				written, err := plugin.AddPayloadString(tt.input)
+
+				if err != nil {
+					t.Fatalf("Error occurred appending given empty input to payload buffer: %v", err)
+				}
+
+				if written > 0 {
+					t.Fatalf("Unexpected append of %d bytes to payload buffer", written)
+				} else {
+					t.Logf("Successfully handled %d bytes given input", written)
+				}
+			}
+
+			// Repeat function call should produce no collected output.
+			var want string
+			for i := 0; i < repeat+1; i++ {
+				want += tt.input
+			}
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches total given input.")
+			}
+		})
+	}
+}
+
 // TestAddPayloadBytes_AppendsInputSuccessfullyWhenCalledOnce asserts that a
 // payload buffer populated via the `AddPayloadBytes` method with
 // non-repeating valid input produces valid output.
@@ -766,6 +966,72 @@ func TestAddPayloadBytes_AppendsInputSuccessfullyWhenCalledMultipleTimes(t *test
 				t.Errorf("(-want, +got)\n:%s", d)
 			} else {
 				t.Logf("OK: Payload buffer matches given input.")
+			}
+		})
+	}
+}
+
+// TestAddPayloadBytes_AppendsNothingWhenCalledWithEmptyInput asserts that
+// when given empty input the `AddPayloadBytes` method does not return an
+// error and produces no output.
+func TestAddPayloadBytes_AppendsNothingWhenCalledWithEmptyInput(t *testing.T) {
+	t.Parallel()
+
+	plugin := NewPlugin()
+
+	tests := map[string]struct {
+		input []byte
+	}{
+		"empty string": {
+			input: []byte(""),
+		},
+		"empty byte slice": {
+			input: []byte{},
+		},
+		"nil": {
+			input: nil,
+		},
+	}
+
+	for name, tt := range tests {
+		// Guard against referencing the loop iterator variable directly.
+		//
+		// https://stackoverflow.com/questions/68559574/using-the-variable-on-range-scope-x-in-function-literal-scopelint
+		// https://github.com/golang/go/wiki/CommonMistakes#using-goroutines-on-loop-iterator-variables
+		tt := tt
+
+		t.Run(name, func(t *testing.T) {
+			t.Logf("Evaluating input %#v", tt.input)
+
+			plugin.encodedPayloadBuffer.Reset()
+
+			repeat := 2
+			for i := 0; i < repeat+1; i++ {
+				written, err := plugin.AddPayloadBytes(tt.input)
+
+				if err != nil {
+					t.Fatalf("Error occurred appending given empty input to payload buffer: %v", err)
+				}
+
+				if written > 0 {
+					t.Fatalf("Unexpected append of %d bytes to payload buffer", written)
+				} else {
+					t.Logf("Successfully handled %d bytes given input", written)
+				}
+			}
+
+			// Repeat function call should produce no collected output.
+			var want string
+			for i := 0; i < repeat+1; i++ {
+				want += string(tt.input)
+			}
+
+			got := plugin.encodedPayloadBuffer.String()
+
+			if d := cmp.Diff(want, got); d != "" {
+				t.Errorf("(-want, +got)\n:%s", d)
+			} else {
+				t.Logf("OK: Payload buffer matches total given input.")
 			}
 		})
 	}
