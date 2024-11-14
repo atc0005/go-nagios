@@ -49,7 +49,7 @@ func Example_extractEncodedPayload() {
 		nagios.CheckOutputEOL,
 	)
 
-	decodedPayload, err := nagios.ExtractAndDecodeASCII85Payload(
+	decodedPayload, err := nagios.ExtractAndDecodePayload(
 		originalPluginOutput,
 		"",
 		nagios.DefaultASCII85EncodingDelimiterLeft,
