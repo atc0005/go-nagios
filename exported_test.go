@@ -561,6 +561,8 @@ func TestPluginWithEncodedPayloadWithValidInputProducesValidOutput(t *testing.T)
 			// constructor would.
 			plugin := nagios.NewPlugin()
 
+			// plugin.DebugLoggingEnableAll()
+
 			var outputBuffer strings.Builder
 
 			plugin.SetOutputTarget(&outputBuffer)
@@ -607,7 +609,7 @@ func TestPluginWithEncodedPayloadWithValidInputProducesValidOutput(t *testing.T)
 	}
 }
 
-func TestEncodeASCII85Payload_SuccessfullyEncodesPayloadWithValidInput(t *testing.T) {
+func TestEncodePayload_SuccessfullyEncodesPayloadWithValidInput(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
@@ -685,7 +687,7 @@ func TestEncodeASCII85Payload_SuccessfullyEncodesPayloadWithValidInput(t *testin
 		t.Run(name, func(t *testing.T) {
 			want := tt.expectedOutput
 
-			got := nagios.EncodeASCII85Payload(
+			got := nagios.EncodePayload(
 				tt.unencodedPayloadInput,
 				tt.delimiterLeft,
 				tt.delimiterRight,
@@ -700,7 +702,7 @@ func TestEncodeASCII85Payload_SuccessfullyEncodesPayloadWithValidInput(t *testin
 	}
 }
 
-func TestEncodeASCII85Payload_FailsToEncodePayloadWithInvalidInput(t *testing.T) {
+func TestEncodePayload_FailsToEncodePayloadWithInvalidInput(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
@@ -742,7 +744,7 @@ func TestEncodeASCII85Payload_FailsToEncodePayloadWithInvalidInput(t *testing.T)
 		t.Run(name, func(t *testing.T) {
 			want := tt.expectedOutput
 
-			got := nagios.EncodeASCII85Payload(
+			got := nagios.EncodePayload(
 				tt.unencodedPayloadInput,
 				tt.delimiterLeft,
 				tt.delimiterRight,
@@ -757,7 +759,7 @@ func TestEncodeASCII85Payload_FailsToEncodePayloadWithInvalidInput(t *testing.T)
 	}
 }
 
-func TestDecodeASCII85Payload_SuccessfullyDecodesPayloadWithValidInput(t *testing.T) {
+func TestDecodePayload_SuccessfullyDecodesPayloadWithValidInput(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
@@ -835,7 +837,7 @@ func TestDecodeASCII85Payload_SuccessfullyDecodesPayloadWithValidInput(t *testin
 		t.Run(name, func(t *testing.T) {
 			want := tt.expectedOutput
 
-			result, err := nagios.DecodeASCII85Payload(
+			result, err := nagios.DecodePayload(
 				tt.encodedPayloadInput,
 				tt.delimiterLeft,
 				tt.delimiterRight,
@@ -858,7 +860,7 @@ func TestDecodeASCII85Payload_SuccessfullyDecodesPayloadWithValidInput(t *testin
 	}
 }
 
-func TestDecodeASCII85Payload_FailsToDecodePayloadWithInvalidInput(t *testing.T) {
+func TestDecodePayload_FailsToDecodePayloadWithInvalidInput(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
@@ -922,7 +924,7 @@ func TestDecodeASCII85Payload_FailsToDecodePayloadWithInvalidInput(t *testing.T)
 			// input, we expect  a nil value.
 			var want []byte
 
-			got, err := nagios.DecodeASCII85Payload(
+			got, err := nagios.DecodePayload(
 				tt.input,
 				tt.delimiterLeft,
 				tt.delimiterRight,
@@ -945,7 +947,7 @@ func TestDecodeASCII85Payload_FailsToDecodePayloadWithInvalidInput(t *testing.T)
 	}
 }
 
-func TestExtractEncodedASCII85Payload_SuccessfullyExtractsEncodedPayloadWithValidInput(t *testing.T) {
+func TestExtractEncodedPayload_SuccessfullyExtractsEncodedPayloadWithValidInput(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
@@ -1032,7 +1034,11 @@ func TestExtractEncodedASCII85Payload_SuccessfullyExtractsEncodedPayloadWithVali
 		t.Run(name, func(t *testing.T) {
 			want := tt.expectedOutput
 
-			got, err := nagios.ExtractEncodedASCII85Payload(
+			// t.Logf("tt.inputWithEncodedPayload: %s", tt.inputWithEncodedPayload)
+			// t.Logf("tt.delimiterLeft: %q", tt.delimiterLeft)
+			// t.Logf("tt.delimiterRight: %q", tt.delimiterRight)
+
+			got, err := nagios.ExtractEncodedPayload(
 				tt.inputWithEncodedPayload,
 				"", // custom regex option; we will use default by not providing value here
 				tt.delimiterLeft,
@@ -1040,7 +1046,10 @@ func TestExtractEncodedASCII85Payload_SuccessfullyExtractsEncodedPayloadWithVali
 			)
 
 			if err != nil {
-				t.Fatalf("Failed to extract encoded payload: %v", err)
+				t.Errorf("Failed to extract encoded payload: %v", err)
+
+				// t.Logf("tt.inputWithEncodedPayload modified: %s", replaceOutsideRange(t, tt.inputWithEncodedPayload))
+
 			} else {
 				t.Logf("Successfully extracted encoded payload")
 			}
@@ -1054,7 +1063,7 @@ func TestExtractEncodedASCII85Payload_SuccessfullyExtractsEncodedPayloadWithVali
 	}
 }
 
-func TestExtractEncodedASCII85Payload_FailsToExtractEncodedPayloadWithInvalidInput(t *testing.T) {
+func TestExtractEncodedPayload_FailsToExtractEncodedPayloadWithInvalidInput(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
@@ -1143,7 +1152,7 @@ func TestExtractEncodedASCII85Payload_FailsToExtractEncodedPayloadWithInvalidInp
 		t.Run(name, func(t *testing.T) {
 			want := tt.expectedOutput
 
-			got, err := nagios.ExtractEncodedASCII85Payload(
+			got, err := nagios.ExtractEncodedPayload(
 				tt.inputWithEncodedPayload,
 				"",
 				tt.delimiterLeft,
@@ -1172,7 +1181,7 @@ func TestExtractEncodedASCII85Payload_FailsToExtractEncodedPayloadWithInvalidInp
 	}
 }
 
-func TestExtractAndDecodeASCII85Payload_SuccessfullyExtractsAndDecodesPayloadWithValidInput(t *testing.T) {
+func TestExtractAndDecodePayload_SuccessfullyExtractsAndDecodesPayloadWithValidInput(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
@@ -1259,7 +1268,7 @@ func TestExtractAndDecodeASCII85Payload_SuccessfullyExtractsAndDecodesPayloadWit
 		t.Run(name, func(t *testing.T) {
 			want := tt.expectedOutput
 
-			got, err := nagios.ExtractAndDecodeASCII85Payload(
+			got, err := nagios.ExtractAndDecodePayload(
 				tt.inputWithEncodedPayload,
 				"", // custom regex option; we will use default by not providing value here
 				tt.delimiterLeft,
@@ -1281,7 +1290,7 @@ func TestExtractAndDecodeASCII85Payload_SuccessfullyExtractsAndDecodesPayloadWit
 	}
 }
 
-func TestExtractAndDecodeASCII85Payload_FailsToExtractAndDecodePayloadWithInvalidInput(t *testing.T) {
+func TestExtractAndDecodePayload_FailsToExtractAndDecodePayloadWithInvalidInput(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
@@ -1293,14 +1302,14 @@ func TestExtractAndDecodeASCII85Payload_FailsToExtractAndDecodePayloadWithInvali
 	}
 
 	/*
-		The ExtractAndDecodeASCII85Payload function (just like the
-		ExtractEncodedASCII85Payload function) produces (reliably) undesirable
+		The ExtractAndDecodePayload function (just like the
+		ExtractEncodedPayload function) produces (reliably) undesirable
 		results when delimiters are not used.
 
 		When we attempt to decode `OK: Datastore HUSVM-DC1-` as Ascii85
 		encoded text it generates "noise".
 
-		encodedPayload, err := ExtractEncodedASCII85Payload(text, customRegex, leftDelimiter, rightDelimiter)
+		encodedPayload, err := ExtractEncodedPayload(text, customRegex, leftDelimiter, rightDelimiter)
 
 			contents of `encodedPayload`:
 				OK: Datastore HUSVM-DC1-
@@ -1434,7 +1443,7 @@ func TestExtractAndDecodeASCII85Payload_FailsToExtractAndDecodePayloadWithInvali
 		t.Run(name, func(t *testing.T) {
 			want := tt.expectedOutput
 
-			got, err := nagios.ExtractAndDecodeASCII85Payload(
+			got, err := nagios.ExtractAndDecodePayload(
 				tt.inputWithEncodedPayload,
 				tt.chosenRegex,
 				tt.delimiterLeft,
