@@ -231,15 +231,24 @@ func (p Plugin) handleEncodedPayload(w io.Writer) {
 		return
 	}
 
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes unencoded EncodedPayload content before compression attempt", p.encodedPayloadBuffer.Len()))
+
+	// We opt to continue with original data instead of failing due to a
+	// compression error; failing at this stage loses all results gathered by
+	// the plugin.
+	payloadData := p.compressPayloadBufferOrFallback()
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes EncodedPayload data retrieved", len(payloadData)))
+
 	leftDelimiter := p.getEncodedPayloadDelimiterLeft()
 	rightDelimiter := p.getEncodedPayloadDelimiterRight()
 
-	// Encode the contents of the buffer to Ascii85 with delimiters.
-	encodedWithDelimiters := EncodeASCII85Payload(
-		p.encodedPayloadBuffer.Bytes(),
+	encodedWithDelimiters := encodeASCII85(
+		payloadData,
 		leftDelimiter,
 		rightDelimiter,
 	)
+
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes EncodedPayload data encoded", len(encodedWithDelimiters)))
 
 	var totalWritten int
 
@@ -257,6 +266,8 @@ func (p Plugin) handleEncodedPayload(w io.Writer) {
 		)
 		if err != nil {
 			panic("Failed to write EncodedPayload section label to given output sink")
+		} else {
+			p.logPluginOutputSize(fmt.Sprintf("%d bytes EncodedPayload section header written", len(encodedWithDelimiters)))
 		}
 
 		totalWritten += written
