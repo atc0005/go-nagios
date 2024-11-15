@@ -77,8 +77,8 @@ such time that the API is considered stable.
 - Support for adding/embedding a compressed and encoded payload in plugin
   output
 - Support for decoding and decompressing encoded input (payload)
-- Support for extracting, decoding and decompressing an encoded payload from
-  captured plugin output
+- Support for extracting (without decoding & decompressing) an encoded payload
+  from captured plugin output
 - Support for extracting, decoding and decompressing an encoded payload (into
   the original non-encoded form) from captured plugin output
 - Optional debug logging for plugin activity
