@@ -102,7 +102,7 @@ func (p Plugin) handleThresholdsSection(w io.Writer) {
 		return
 
 	case p.isThresholdsSectionHidden():
-		p.logAction("Skipping emission of thresholds section; option to hide errors enabled")
+		p.logAction("Skipping emission of thresholds section; option to hide thresholds enabled")
 
 		return
 	}
