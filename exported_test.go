@@ -43,6 +43,12 @@ var (
 	//go:embed testdata/plugin-output-gh103-one-line-with-perf-data.txt
 	pluginOutputGH103OneLineWithPerfData string
 
+	//go:embed testdata/plugin-output-multiline-with-optional-perf-data-included.txt
+	pluginOutputMultiLineWithOptionalPerfDataIncluded string
+
+	//go:embed testdata/plugin-output-one-line-with-optional-perf-data-included.txt
+	pluginOutputOneLineWithOptionalPerfDataIncluded string
+
 	//go:embed testdata/payload/small_json_payload_unencoded.txt
 	smallJSONPayloadUnencoded string
 
@@ -201,14 +207,15 @@ func TestPluginOutputIsValid(t *testing.T) {
 	}
 }
 
-// TestPerformanceDataIsOnSameLineAsServiceOutput asserts that performance
-// data is emitted on the same line as the Service Output (aka, "one-line
-// summary") if Long Service Output is empty.
+// TestDefaultPerformanceDataIsOnSameLineAsServiceOutput asserts that
+// performance data is emitted on the same line as the Service Output (aka,
+// "one-line summary") if Long Service Output is empty. We use default
+// performance data metrics for this test.
 //
 // See also:
 //
 // - https://github.com/atc0005/go-nagios/issues/103
-func TestPerformanceDataIsOnSameLineAsServiceOutput(t *testing.T) {
+func TestDefaultPerformanceDataIsOnSameLineAsServiceOutput(t *testing.T) {
 	t.Parallel()
 
 	want := pluginOutputGH103OneLineWithPerfData
@@ -233,7 +240,7 @@ func TestPerformanceDataIsOnSameLineAsServiceOutput(t *testing.T) {
 			" is 0.01% of 18.0TB with 18.0TB remaining" +
 			" [WARNING: 90% , CRITICAL: 95%]"
 
-	pluginOutputWithLongServiceOutputMetrics(t, &plugin)
+	pluginOutputWithLongServiceOutputDefaultMetrics(t, &plugin)
 
 	// Process exit state, emit output to our output buffer.
 	plugin.ReturnCheckResults()
@@ -247,13 +254,14 @@ func TestPerformanceDataIsOnSameLineAsServiceOutput(t *testing.T) {
 	}
 }
 
-// TestPerformanceDataIsAfterLongServiceOutput asserts that performance data
-// is emitted after Long Service Output when that content is available.
+// TestDefaultPerformanceDataIsAfterLongServiceOutput asserts that performance
+// data is emitted after Long Service Output when that content is available.
+// We use default performance data metrics for this test.
 //
 // See also:
 //
 // - https://github.com/atc0005/go-nagios/issues/103
-func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
+func TestDefaultPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 	t.Parallel()
 
 	want := pluginOutputGH103MultiLineWithPerfData
@@ -274,7 +282,97 @@ func TestPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
 	plugin.SkipOSExit()
 
 	pluginOutputWithLongServiceOutputSetup(t, &plugin)
-	pluginOutputWithLongServiceOutputMetrics(t, &plugin)
+	pluginOutputWithLongServiceOutputDefaultMetrics(t, &plugin)
+
+	// Process exit state, emit output to our output buffer.
+	plugin.ReturnCheckResults()
+
+	// Retrieve the output buffer content so that we can compare actual output
+	// against our expected output to assert we have a 1:1 match.
+	got := outputBuffer.String()
+
+	if d := cmp.Diff(want, got); d != "" {
+		t.Errorf("(-want, +got)\n:%s", d)
+	}
+}
+
+// TestAllOptionalPerformanceDataIsOnSameLineAsServiceOutput asserts that
+// performance data is emitted on the same line as the Service Output (aka,
+// "one-line summary") if Long Service Output is empty. We use all optional
+// performance data metrics for this test.
+//
+// NOTE: Later additions of optional performance data metrics will require
+// updating the "golden" file to reflect those values (and expected output
+// size). We may need to refactor this test to either be less strict.
+func TestAllOptionalPerformanceDataIsOnSameLineAsServiceOutput(t *testing.T) {
+	t.Parallel()
+
+	want := pluginOutputOneLineWithOptionalPerfDataIncluded
+
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
+	// constructor.
+	plugin := nagios.Plugin{
+		LastError:      nil,
+		ExitStatusCode: nagios.StateOKExitCode,
+	}
+
+	var outputBuffer strings.Builder
+	plugin.SetOutputTarget(&outputBuffer)
+
+	// os.Exit calls break tests
+	plugin.SkipOSExit()
+
+	//nolint:goconst
+	plugin.ServiceOutput =
+		"OK: Datastore HUSVM-DC1-vol6 space usage (0 VMs)" +
+			" is 0.01% of 18.0TB with 18.0TB remaining" +
+			" [WARNING: 90% , CRITICAL: 95%]"
+
+	pluginOutputWithLongServiceOutputDefaultMetrics(t, &plugin)
+	pluginOutputWithLongServiceOutputAllOptionalMetrics(t, &plugin)
+
+	// Process exit state, emit output to our output buffer.
+	plugin.ReturnCheckResults()
+
+	// Retrieve the output buffer content so that we can compare actual output
+	// against our expected output to assert we have a 1:1 match.
+	got := outputBuffer.String()
+
+	if d := cmp.Diff(want, got); d != "" {
+		t.Errorf("(-want, +got)\n:%s", d)
+	}
+}
+
+// TestAllOptionalPerformanceDataIsAfterLongServiceOutput asserts that
+// performance data is emitted after Long Service Output when that content is
+// available. We use all optional performance data metrics for this test.
+//
+// NOTE: Later additions of optional performance data metrics will require
+// updating the "golden" file to reflect those values (and expected output
+func TestAllOptionalPerformanceDataIsAfterLongServiceOutput(t *testing.T) {
+	t.Parallel()
+
+	want := pluginOutputMultiLineWithOptionalPerfDataIncluded
+
+	var outputBuffer strings.Builder
+
+	// Setup Plugin value manually. This approach does not provide the
+	// default time metric that would be provided when using the Plugin
+	// constructor.
+	plugin := nagios.Plugin{
+		LastError:      nil,
+		ExitStatusCode: nagios.StateOKExitCode,
+	}
+
+	plugin.SetOutputTarget(&outputBuffer)
+
+	// os.Exit calls break tests
+	plugin.SkipOSExit()
+
+	pluginOutputWithLongServiceOutputSetup(t, &plugin)
+	pluginOutputWithLongServiceOutputDefaultMetrics(t, &plugin)
+	pluginOutputWithLongServiceOutputAllOptionalMetrics(t, &plugin)
 
 	// Process exit state, emit output to our output buffer.
 	plugin.ReturnCheckResults()
@@ -592,7 +690,7 @@ func TestPluginWithEncodedPayloadWithValidInputProducesValidOutput(t *testing.T)
 				t.Logf("Successfully appended %d bytes given input to payload buffer", written)
 			}
 
-			pluginOutputWithLongServiceOutputMetrics(t, plugin)
+			pluginOutputWithLongServiceOutputDefaultMetrics(t, plugin)
 
 			// Process exit state, emit output to our output buffer.
 			plugin.ReturnCheckResults()
@@ -1544,7 +1642,7 @@ func pluginOutputWithLongServiceOutputSetup(t *testing.T, plugin *nagios.Plugin)
 	plugin.LongServiceOutput += longServiceOutputBuffer.String()
 }
 
-func pluginOutputWithLongServiceOutputMetrics(t *testing.T, plugin *nagios.Plugin) {
+func pluginOutputWithLongServiceOutputDefaultMetrics(t *testing.T, plugin *nagios.Plugin) {
 	t.Helper()
 
 	// os.Exit calls break tests. Potentially duplicated by caller, but
@@ -1559,4 +1657,23 @@ func pluginOutputWithLongServiceOutputMetrics(t *testing.T, plugin *nagios.Plugi
 	if err := plugin.AddPerfData(false, pd); err != nil {
 		t.Errorf("failed to add performance data: %v", err)
 	}
+}
+
+func pluginOutputWithLongServiceOutputAllOptionalMetrics(t *testing.T, plugin *nagios.Plugin) {
+	t.Helper()
+
+	// os.Exit calls break tests. Potentially duplicated by caller, but
+	// effectively a NOOP if repeated so not an issue.
+	plugin.SkipOSExit()
+
+	// pd := nagios.PerformanceData{
+	// 	Label: "plugin_output_size",
+	// 	Value: "9999KB",
+	// }
+
+	plugin.EnablePluginOutputSizePerfDataMetric()
+
+	// if err := plugin.AddPerfData(false, pd); err != nil {
+	// 	t.Errorf("failed to add performance data: %v", err)
+	// }
 }
