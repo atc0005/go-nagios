@@ -29,6 +29,7 @@ updates:
       - dependency-type: "all"
     commit-message:
       prefix: "Go Dependency"
+    rebase-strategy: "disabled"
 
   - package-ecosystem: "gomod"
     directory: "/"
@@ -46,6 +47,7 @@ updates:
       - dependency-type: "all"
     commit-message:
       prefix: "Go Dependency"
+    rebase-strategy: "disabled"
 
   ######################################################################
   # Monitor GitHub Actions dependency updates
@@ -68,6 +70,7 @@ updates:
       - dependency-type: "all"
     commit-message:
       prefix: "CI Dependency"
+    rebase-strategy: "disabled"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -86,3 +89,4 @@ updates:
       - dependency-type: "all"
     commit-message:
       prefix: "CI Dependency"
+    rebase-strategy: "disabled"
